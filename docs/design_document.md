@@ -522,3 +522,15 @@ Ensure you have CMake and FreeGLUT installed on your system:
 - `,`/`<` and `.`/`>`: Step backward / forward through solving steps.
 - `H`/`h`: Show/Hide instruction HUD panel.
 - `Esc`: Close application.
+
+---
+
+## 13. System Improvements & Future Enhancements
+
+For detailed plans on potential system improvements, graphics engine modernization, and the complete architecture for dynamic cube size selection, please refer to the dedicated [improvements.md](file:///Users/oneionei/MyProjects/rubbicx/rubikx-3d/docs/improvements.md) document.
+
+### Summary of Future Enhancements
+1. **Graphics Pipeline Modernization:** Transitioning to compiled GLSL shaders and Vertex Array Objects (VAOs) under OpenGL 3.3+.
+2. **Dynamic Cube Size Scaling:** Automating the camera radius scaling ($10.0\text{f} + 2.0\text{f} \cdot (\text{size} - 3)$) and generating dynamic scrambling ranges.
+3. **Interactive 3D Picking:** Implementing mouse raycasting for dragging faces directly.
+4. **Optimal Solvers:** Integrating phase-based shortest-path solving solvers.
