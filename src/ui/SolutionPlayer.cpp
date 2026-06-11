@@ -1,6 +1,6 @@
 #include "SolutionPlayer.h"
-#include "Animation.h"
-#include "RubiksCube.h"
+#include "../Animation.h"
+#include "cube/RubiksCube.h"
 #include <iostream>
 
 SolutionPlayer::SolutionPlayer() 

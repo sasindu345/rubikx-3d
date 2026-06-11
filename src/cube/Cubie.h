@@ -1,5 +1,5 @@
 #pragma once
-#include "Colors.h"
+#include "../Colors.h"
 #include "Move.h"
 
 class Cubie {
