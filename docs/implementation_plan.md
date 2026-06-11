@@ -1,211 +1,64 @@
-# RubikX-3D — Implementation Plan & Phase-by-Phase Checklist
+# Solver Fix & Interactive Help Window HUD Overlay
 
-This document details the roadmap, technical specifications, and progressive checklists for developing the **Interactive 3D Rubik's Cube Learning, Visualization and Solving System**.
+We are addressing two primary requirements requested by the user:
+1. **Z key solver not working**: Fixing the double-turn parsing issue (like `F2`, `R2`, `B2`) where the solver algorithm interpreter failed to rotate faces 180 degrees, leading to scrambled states and infinite loops.
+2. **User help/instruction window**: Creating a toggleable text HUD panel in 2D orthographic screen space that displays controls, shortcuts, camera navigation instructions, and an active solver playback dashboard.
 
----
+## User Review Required
 
-## 🛠️ Environment Verification
+> [!NOTE]
+> The HUD help menu will be displayed by default when the application starts, greeting the user with clear instructions on how to use the interactive Rubik's cube system. The user can press `H` or `h` at any time to hide or show it.
 
-| Dependency | Status | Version / Path |
-|---|---|---|
-| **C++ Compiler** | ✅ Installed | Apple Clang 17.0.0 (`/usr/bin/clang++`) |
-| **CMake** | ✅ Installed | 4.2.3 (`/opt/homebrew/bin/cmake`) |
-| **Make** | ✅ Installed | `/usr/bin/make` |
-| **OpenGL** | ✅ System Framework | macOS SDK `OpenGL.framework` |
-| **FreeGLUT** | ✅ Homebrew | 3.8.0 (`/opt/homebrew/lib/libglut.dylib`) |
-| **GLUT Headers** | ✅ Available | `/opt/homebrew/include/GL/glut.h` |
-| **Build State** | ✅ Clean compile | 23/23 source files → `RubikX3D` binary |
+## Open Questions
+
+None at this time. The requirements are clear: resolve the 'Z' key hang/malfunction and build the visual helper overlay.
 
 ---
 
-## 📂 Project Directory Structure
+## Proposed Changes
 
-```
-rubikx-3d/
-├── .gitignore                     ✅ Created
-├── CMakeLists.txt                 ✅ Created
-├── Makefile                       ✅ Created
-├── README.md                      ✅ Updated with full documentation
-│
-├── docs/
-│   └── implementation_plan.md     👈 This file
-│
-├── include/
-│   ├── core/
-│   │   ├── Cubie.h                ✅ Stub
-│   │   ├── RubiksCube.h           ✅ Stub
-│   │   ├── Move.h                 ✅ Stub
-│   │   └── CubeFactory.h         ✅ Stub
-│   ├── graphics/
-│   │   ├── Renderer.h             ✅ Stub
-│   │   ├── Camera.h               ✅ Stub
-│   │   ├── Lighting.h             ✅ Stub
-│   │   ├── Animation.h            ✅ Stub
-│   │   └── Colors.h               ✅ Stub
-│   ├── solver/
-│   │   ├── Solver.h               ✅ Stub (abstract interface)
-│   │   ├── Solver2x2.h            ✅ Stub
-│   │   ├── Solver3x3.h            ✅ Stub
-│   │   ├── Solver4x4.h            ✅ Stub
-│   │   └── Scrambler.h            ✅ Stub
-│   ├── ui/
-│   │   ├── HUD.h                  ✅ Stub
-│   │   ├── Menu.h                 ✅ Stub
-│   │   ├── PatternEditor.h        ✅ Stub
-│   │   └── SolutionPlayer.h       ✅ Stub
-│   └── utils/
-│       ├── MathUtils.h            ✅ Stub
-│       ├── Timer.h                ✅ Stub
-│       ├── History.h              ✅ Stub
-│       └── ScoreManager.h         ✅ Stub
-│
-├── src/
-│   ├── main.cpp                   ✅ GLUT window + callbacks + test triangle
-│   ├── core/                      ✅ All stubs
-│   ├── graphics/                  ✅ All stubs
-│   ├── solver/                    ✅ All stubs
-│   ├── ui/                        ✅ All stubs
-│   └── utils/                     ✅ All stubs
-│
-└── data/                          (created on first history save)
-```
+### Solver Component
+
+#### [MODIFY] [Solver3x3.cpp](file:///Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/solver/Solver3x3.cpp)
+- Update `doAlg` to inspect each token for double moves (ending with '2').
+- If a token ends with '2', strip the '2', parse it as a standard move, and execute `doMove` twice consecutively. This decomposes 180° rotations into two 90° rotations on the cube state.
 
 ---
 
-## 📅 Step-by-Step Development Checklist
+### UI & Graphics Components
+
+#### [MODIFY] [HUD.h](file:///Users/oneionei/MyProjects/rubbicx/rubikx-3d/include/ui/HUD.h)
+- Declare `render(int width, int height, const SolutionPlayer& player, bool showHelp)` in the `HUD` class.
+- Declare helper methods `drawString` and `drawPanel` for rendering shapes and characters.
+
+#### [MODIFY] [HUD.cpp](file:///Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/HUD.cpp)
+- Implement `render` to set up a 2D orthographic projection using `gluOrtho2D`.
+- Render a semi-transparent dark grey side panel on the left side of the screen when `showHelp` is active.
+- Display a categorized layout of keys: face rotations (CW/CCW), camera view inputs (left click drag to orbit, right click/scroll to zoom), and system controls (scramble `S`, solve `Z`, play/pause `P`, steps `.`/`,`, speed `+`/`-`).
+- Render a playback dashboard at the bottom center of the window if a solution is loaded. This dashboard displays:
+  - Playback status: `PLAYING`, `PAUSED`, or `COMPLETED`.
+  - Step counter: `Step: X / Y`.
+  - Speed: `X.XX moves/sec`.
+  - A horizontal tape displaying the sequence of moves, highlighting the current move with a contrasting color (e.g. orange) and bracketing it, and showing past moves in grey and future moves in white.
+
+#### [MODIFY] [main.cpp](file:///Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/main.cpp)
+- Add global `HUD hud;` and `bool showHelp = true;`.
+- Modify `display()` to call `hud.render(windowWidth, windowHeight, solutionPlayer, showHelp)` after rendering the 3D cube.
+- Update `keyboard()` to map `H`/`h` to toggle `showHelp`.
 
 ---
 
-### Phase 1 — Environment Setup & Project Skeleton ✅ COMPLETE
+## Verification Plan
 
-- [x] Install required libraries (FreeGLUT, CMake)
-- [x] Verify compiler: Apple Clang 17.0.0 (C++17 support)
-- [x] Create `CMakeLists.txt` with OpenGL/GLUT framework linking
-- [x] Create fallback `Makefile` for direct compilation
-- [x] Create `.gitignore` (build/, *.o, executables, IDE files)
-- [x] Write `src/main.cpp` — GLUT initialization, display/reshape/keyboard/mouse callbacks
-- [x] Create directory structure under `include/` and `src/` for all components
-- [x] Create stub header/source files for all 22 classes
-- [x] Update `README.md` with project description, build instructions, controls, CG concepts
-- [x] Verify compile: 23 source files compile and link successfully
-- [x] Commit Phase 1 skeleton to Git
+### Automated Tests
+- Compile and run our test runner `/Users/oneionei/MyProjects/rubbicx/rubikx-3d/scratch/test_solver` to verify that 50 random scrambles are all correctly and fully solved by `Solver3x3`.
 
----
-
-### Phase 2 — Math Utilities & Cube Data Model ✅ COMPLETE
-
-- [x] Implement `MathUtils.h/cpp` — `Vec3` struct (add, subtract, normalize, cross, dot)
-- [x] Implement `MathUtils.h/cpp` — `Mat4` struct (identity, multiply, rotateX/Y/Z, translate, scale)
-- [x] Implement `Colors.h/cpp` — Define 6 face colors as `Vec3` constants (White, Yellow, Red, Orange, Blue, Green) + Black for internal
-- [x] Implement `Move.h/cpp` — `Face` enum (RIGHT, LEFT, UP, DOWN, FRONT, BACK), `Direction` enum (CW, CCW), `Move` struct, inverse function, toString
-- [x] Implement `Cubie.h/cpp` — Grid position (ix, iy, iz), 6 face colors array, `applyRotation(Face, Direction)` to update position & colors
-- [x] Implement `RubiksCube.h/cpp` — `int size`, `vector<Cubie> cubies`, `applyMove(Move)`, `isSolved()`, `reset()`, `getCubies()`
-- [x] Implement `CubeFactory.h/cpp` — `static RubiksCube create(int size)` generating solved 2×2, 3×3, or 4×4
-- [x] Verify: create cube, apply moves, check `isSolved()` returns false, reset, check returns true
-- [x] Verify clean build passes
-- [x] Commit Phase 2 changes to Git
-
----
-
-### Phase 3 — 3D Rendering (Static Cube) 🔲 NEXT
-
-- [ ] Implement `Renderer.h/cpp` — `renderCube(const RubiksCube&)`: draw each cubie as 6 colored quads with `glBegin(GL_QUADS)`
-- [ ] Add visual gaps (0.05 units) between cubies for grid-line effect
-- [ ] Center the Rubik's Cube at coordinate origin (offset by `-size/2`)
-- [ ] Implement `Lighting.h/cpp` — Set up ambient, diffuse, and specular lighting (`GL_LIGHTING`, `GL_LIGHT0`)
-- [ ] Implement `Camera.h/cpp` — Static camera using `gluLookAt` and perspective projection via `gluPerspective`
-- [ ] Update `main.cpp` — Instantiate default 3x3 cube, call renderer in display loop
-- [ ] Enable `GL_DEPTH_TEST` and `GL_CULL_FACE` (back-face culling visible surface detection)
-- [ ] Verify: static, colored, lit 3x3 cube renders on window
-- [ ] Verify clean build passes
-- [ ] Commit Phase 3 changes to Git
-
----
-
-### Phase 4 — Camera Interaction 🔲
-
-- [ ] Extend `Camera` class to track orbit coordinates: `theta` (azimuth), `phi` (elevation), `radius` (distance)
-- [ ] Implement `orbit(float dTheta, float dPhi)` with elevation bounds to prevent flipping
-- [ ] Implement `zoom(float dRadius)` with safety bounds
-- [ ] Apply camera views dynamically to `gluLookAt`
-- [ ] Wire mouse click+drag in `main.cpp` to rotate camera view
-- [ ] Wire scroll wheel for zooming
-- [ ] Map arrow keys to orbit controls as keyboard shortcut
-- [ ] Verify: mouse drag rotates view and scroll zooms in/out
-- [ ] Verify clean build passes
-- [ ] Commit Phase 4 changes to Git
-
----
-
-### Phase 5 — Face Rotations with Animation 🔲
-
-- [ ] Implement `Animation.h/cpp` — Track active face rotation animation, interpolation angle (0° to 90°) and animation speed
-- [ ] Implement animation queue (buffers rapid keypresses and triggers them sequentially)
-- [ ] Modify `Renderer.cpp` — rotate matching slice of cubies using `glRotatef` during animations
-- [ ] Commit move changes to `RubiksCube` state model once animation concludes
-- [ ] Map keys `R/r, L/l, U/u, D/d, F/f, B/b` to CW/CCW face movements
-- [ ] Set up `glutTimerFunc` at ~16ms (60 FPS) to step animation values
-- [ ] Verify: pressing keys smoothly rotates face layers by 90 degrees
-- [ ] Verify clean build passes
-- [ ] Commit Phase 5 changes to Git
-
----
-
-### Phase 6 — Scrambler & Random Puzzle Generation 🔲
-
-- [ ] Implement `Scrambler.h/cpp` — `generateScramble(size, steps)` (e.g. 20 random moves for 3x3)
-- [ ] Check scrambler output: filter out redundant moves (e.g., U followed by U')
-- [ ] Map `S` key to initiate fast-animation scramble sequence
-- [ ] Verify: pressing `S` scrambles cube and counts moves
-- [ ] Verify clean build passes
-- [ ] Commit Phase 6 changes to Git
-
----
-
-### Phase 7 — Automatic Solver & Solution Playback 🔲
-
-- [ ] Implement `Solver3x3.h/cpp` — Layer-by-layer Beginner's Method algorithm
-- [ ] Implement `Solver2x2.h/cpp` — Ortega solver
-- [ ] Implement `Solver4x4.h/cpp` — Center reduction and edge pairing
-- [ ] Implement `SolutionPlayer.h/cpp` — Handles play, pause, stepping forward/backward, and playback speed
-- [ ] Map `Z` key to solve, `P` for play/pause, `>` for next step, `<` for previous step
-- [ ] Verify: clicking `Z` computes solution; steps through the solver smoothly
-- [ ] Verify clean build passes
-- [ ] Commit Phase 7 changes to Git
-
----
-
-### Phase 8 — Custom Pattern Editor 🔲
-
-- [ ] Implement `PatternEditor.h/cpp` — Toggle 2D editor mode with `E` key
-- [ ] Render flat 2D projection net of the 6 faces using orthographic mode (`glOrtho`)
-- [ ] Handle mouse click picking to cycle facelet colors
-- [ ] Validate custom state validity (e.g. check color counts)
-- [ ] Apply pattern to the 3D cube state and switch back to 3D view
-- [ ] Verify: custom net edits apply correctly on 3D cube model
-- [ ] Verify clean build passes
-- [ ] Commit Phase 8 changes to Git
-
----
-
-### Phase 9 — Scoring, History & Timer 🔲
-
-- [ ] Implement `Timer.h/cpp` — tracks active solving time using `glutGet(GLUT_ELAPSED_TIME)`
-- [ ] Implement `ScoreManager.h/cpp` — calculates user score based on elapsed time, move counts, and hint/solve usage
-- [ ] Implement `History.h/cpp` — save and load solve metrics (time, moves, score) to a local file in `data/history.txt`
-- [ ] Verify: completing solver logs data to history file; check that file persists
-- [ ] Verify clean build passes
-- [ ] Commit Phase 9 changes to Git
-
----
-
-### Phase 10 — HUD, Statistics Dashboard & Polish 🔲
-
-- [ ] Implement `HUD.h/cpp` — draw text panels for active stats (moves, timer, current score) in 2D overlay
-- [ ] Render semi-transparent UI window panels using alpha blending
-- [ ] Implement `Menu.h/cpp` — right-click popup context menu for easy options switching
-- [ ] Implement cube size controls (keys `1`, `2`, `3`)
-- [ ] Apply polish: chamfered/beveled cubie margins, smooth lighting normals, color tuning
-- [ ] Verify: all HUD metrics and controls respond correctly
-- [ ] Verify clean build passes
-- [ ] Commit Phase 10 changes to Git
+### Manual Verification
+- Compile and launch the app: `./build/RubikX3D`.
+- Verify the Help Panel displays on launch.
+- Press `S` to scramble the cube.
+- Press `Z` to compute the solver path.
+- Verify the Solution Playback Dashboard appears.
+- Press `P` to autoplay and ensure the cube is solved.
+- Test step navigation using `.` and `,` and speed controls `+` and `-`.
+- Press `H` to toggle the Help overlay on and off.
