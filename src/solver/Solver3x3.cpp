@@ -7,14 +7,25 @@ Solver3x3::Solver3x3() {}
 Solver3x3::~Solver3x3() {}
 
 void Solver3x3::doMove(RubiksCube& cube, Face face, Direction dir, int layer) {
-    Move m(face, dir, layer);
+    Direction finalDir = dir;
+    if (face == Face::RIGHT || face == Face::LEFT) {
+        finalDir = (dir == Direction::CW) ? Direction::CCW : Direction::CW;
+    }
+    Move m(face, finalDir, layer);
+    std::cout << "      [doMove] " << m.toString() << std::endl;
     cube.applyMove(m);
     solutionMoves.push_back(m);
 }
 
 void Solver3x3::doMove(RubiksCube& cube, const Move& m) {
-    cube.applyMove(m);
-    solutionMoves.push_back(m);
+    Direction finalDir = m.dir;
+    if (m.face == Face::RIGHT || m.face == Face::LEFT) {
+        finalDir = (m.dir == Direction::CW) ? Direction::CCW : Direction::CW;
+    }
+    Move finalMove(m.face, finalDir, m.layer);
+    std::cout << "      [doMove] " << finalMove.toString() << " (from const Move&)" << std::endl;
+    cube.applyMove(finalMove);
+    solutionMoves.push_back(finalMove);
 }
 
 void Solver3x3::doAlg(RubiksCube& cube, const std::string& alg) {
@@ -22,7 +33,17 @@ void Solver3x3::doAlg(RubiksCube& cube, const std::string& alg) {
     std::string token;
     while (ss >> token) {
         if (!token.empty()) {
-            doMove(cube, Move::parse(token));
+            bool isDouble = false;
+            std::string parseToken = token;
+            if (token.back() == '2') {
+                isDouble = true;
+                parseToken = token.substr(0, token.size() - 1);
+            }
+            Move m = Move::parse(parseToken);
+            doMove(cube, m);
+            if (isDouble) {
+                doMove(cube, m);
+            }
         }
     }
 }
@@ -272,20 +293,35 @@ void Solver3x3::solveMiddleLayer(RubiksCube& cube) {
         { Colors::BLUE, Colors::ORANGE, 0, 1, 0 }
     };
 
-    for (const auto& target : targets) {
+    for (int t = 0; t < 4; ++t) {
+        const auto& target = targets[t];
+        std::cout << "  - [Middle Layer] Solving edge: " << Colors::getColorNameString(target.c1) << "-" << Colors::getColorNameString(target.c2) << std::endl;
+        
+        int iters = 0;
         while (true) {
+            iters++;
+            if (iters > 20) {
+                std::cout << "  - [Middle Layer] ERROR: stuck in loop for target " << t << "!" << std::endl;
+                break;
+            }
+            
             int idx = findEdge(cube, target.c1, target.c2);
             const auto& cubie = cube.getCubies()[idx];
             
+            std::cout << "    Current pos: (" << cubie.ix << ", " << cubie.iy << ", " << cubie.iz << ")" << std::endl;
+            
             if (cubie.ix == target.targetX && cubie.iy == 1 && cubie.iz == target.targetZ) {
                 Face fSide = getFaceFromColor(target.c1);
+                std::cout << "    Already at target, checking color orientation..." << std::endl;
                 if (cubie.colors[static_cast<int>(fSide)] == target.c1) {
+                    std::cout << "    Already solved and oriented!" << std::endl;
                     break; // Solved and oriented!
                 }
             }
             
             // If in middle layer, eject it
             if (cubie.iy == 1) {
+                std::cout << "    Ejecting from middle layer position (" << cubie.ix << ", 1, " << cubie.iz << ")..." << std::endl;
                 if (cubie.ix == 2 && cubie.iz == 2) doAlg(cube, "D' R' D R D F D' F'");
                 else if (cubie.ix == 0 && cubie.iz == 2) doAlg(cube, "D L D' L' D' F' D F");
                 else if (cubie.ix == 2 && cubie.iz == 0) doAlg(cube, "D' B' D B D R D' R'");
@@ -294,6 +330,7 @@ void Solver3x3::solveMiddleLayer(RubiksCube& cube) {
             }
             
             // Now in bottom layer, rotate D until aligned
+            std::cout << "    In bottom layer, checking alignment..." << std::endl;
             while (true) {
                 int currIdx = findEdge(cube, target.c1, target.c2);
                 const auto& currCubie = cube.getCubies()[currIdx];
@@ -309,17 +346,21 @@ void Solver3x3::solveMiddleLayer(RubiksCube& cube) {
                 }
                 
                 Face centerFace = getFaceFromColor(sideColor);
+                std::cout << "      sideFace: " << static_cast<int>(sideFace) << ", centerFace: " << static_cast<int>(centerFace) << " (color: " << Colors::getColorNameString(sideColor) << ")" << std::endl;
                 if (sideFace == centerFace) {
                     Colors::ColorName botColor = (sideColor == target.c1) ? target.c2 : target.c1;
                     Face botFace = getFaceFromColor(botColor);
                     bool toRight = isRightOf(centerFace, botFace);
+                    std::cout << "      Aligned! Inserting centerFace=" << static_cast<int>(centerFace) << ", toRight=" << toRight << std::endl;
                     doAlg(cube, getInsertionAlg(centerFace, toRight));
                     break;
                 }
+                std::cout << "      Not aligned. Rotating D..." << std::endl;
                 doMove(cube, Face::DOWN, Direction::CW);
             }
             break;
         }
+        if (iters > 20) break;
     }
 }
 
@@ -467,13 +508,21 @@ std::vector<Move> Solver3x3::solve(const RubiksCube& cube) {
     solutionMoves.clear();
     RubiksCube copyCube = cube;
     
+    std::cout << "  - Starting White Cross..." << std::endl;
     solveWhiteCross(copyCube);
+    std::cout << "  - White Cross Done. Starting White Corners..." << std::endl;
     solveWhiteCorners(copyCube);
+    std::cout << "  - White Corners Done. Starting Middle Layer..." << std::endl;
     solveMiddleLayer(copyCube);
+    std::cout << "  - Middle Layer Done. Starting Yellow Cross..." << std::endl;
     solveYellowCross(copyCube);
+    std::cout << "  - Yellow Cross Done. Starting Yellow Corners Orientation..." << std::endl;
     orientYellowCorners(copyCube);
+    std::cout << "  - Yellow Corners Orientation Done. Starting Yellow Corners Permutation..." << std::endl;
     permuteYellowCorners(copyCube);
+    std::cout << "  - Yellow Corners Permutation Done. Starting Yellow Edges Permutation..." << std::endl;
     permuteYellowEdges(copyCube);
+    std::cout << "  - Yellow Edges Permutation Done. Cube Solved!" << std::endl;
     
     return solutionMoves;
 }

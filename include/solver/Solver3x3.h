@@ -3,7 +3,7 @@
 #include <string>
 
 class Solver3x3 : public Solver {
-private:
+public:
     std::vector<Move> solutionMoves;
 
     void doMove(RubiksCube& cube, Face face, Direction dir, int layer = 0);
