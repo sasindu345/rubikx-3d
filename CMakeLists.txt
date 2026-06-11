@@ -12,7 +12,12 @@ file(GLOB_RECURSE SRC_FILES
 )
 
 # Header search paths
-include_directories(include)
+include_directories(src)
+include_directories(src/algorithms)
+include_directories(src/cube)
+include_directories(src/solver)
+include_directories(src/ui)
+include_directories(src/utils)
 
 # Find OpenGL
 find_package(OpenGL REQUIRED)

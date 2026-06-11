@@ -1,15 +1,17 @@
 #include <iostream>
-#include "core/RubiksCube.h"
-#include "core/CubeFactory.h"
-#include "core/Move.h"
-#include "graphics/Renderer.h"
-#include "graphics/Camera.h"
-#include "graphics/Lighting.h"
-#include "graphics/Animation.h"
+#include "cube/RubiksCube.h"
+#include "cube/CubeFactory.h"
+#include "cube/Move.h"
+#include "Renderer.h"
+#include "Camera.h"
+#include "Lighting.h"
+#include "Animation.h"
 #include "solver/Scrambler.h"
-#include "solver/Solver3x3.h"
+#include "solver/ReverseSolver.h"
 #include "ui/SolutionPlayer.h"
 #include "ui/HUD.h"
+#include "algorithms/Algorithms.h"
+
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -90,17 +92,11 @@ void reshape(int width, int height) {
     windowWidth = width;
     windowHeight = height;
     
-    glViewport(0, 0, width, height);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    configureViewport(0, 0, width, height);
     
     float aspect = (float)width / (float)height;
     // Set 45-degree field-of-view, near clipping plane at 0.1, far clipping plane at 100.0
-    gluPerspective(45.0, aspect, 0.1, 100.0);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    setupPerspectiveProjection(45.0, aspect, 0.1, 100.0);
 }
 
 // Keyboard callback
@@ -123,10 +119,7 @@ void keyboard(unsigned char key, int x, int y) {
         case 'z':
             if (!animation.isAnimating() && animation.moveQueue.empty()) {
                 std::cout << "Calculating backward steps from history..." << std::endl;
-                std::vector<Move> solution;
-                for (auto it = moveHistory.rbegin(); it != moveHistory.rend(); ++it) {
-                    solution.push_back(it->getInverse());
-                }
+                std::vector<Move> solution = ReverseSolver::solve(moveHistory);
                 std::cout << "Solution computed (" << solution.size() << " moves): ";
                 for (const auto& m : solution) {
                     std::cout << m.toString() << " ";
@@ -302,12 +295,10 @@ void initGL() {
     glClearColor(0.12f, 0.12f, 0.15f, 1.0f);
     
     // Enable depth test for hidden surface removal
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    enableDepthTesting();
     
     // Enable back-face culling for visible surface detection demonstration
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    enableBackFaceCulling();
     
     // Smooth shading model
     glShadeModel(GL_SMOOTH);

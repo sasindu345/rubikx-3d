@@ -1,4 +1,4 @@
-#include "solver/Scrambler.h"
+#include "Scrambler.h"
 #include <random>
 
 Scrambler::Scrambler() {}

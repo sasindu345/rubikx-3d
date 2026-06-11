@@ -1,37 +1,26 @@
-#include "ui/HUD.h"
+#include "HUD.h"
+#include "algorithms/Algorithms.h"
 #include <cstdio>
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 HUD::HUD() {}
 HUD::~HUD() {}
 
 void HUD::drawPanel(int x, int y, int w, int h, float r, float g, float b, float a) {
-    glColor4f(r, g, b, a);
-    glBegin(GL_QUADS);
-    glVertex2i(x, y);
-    glVertex2i(x + w, y);
-    glVertex2i(x + w, y + h);
-    glVertex2i(x, y + h);
-    glEnd();
+    rasterizeQuad(x, y, x + w, y, x + w, y + h, x, y + h, r, g, b, a);
 }
 
 void HUD::drawBorder(int x, int y, int w, int h, float r, float g, float b, float a, float lineWidth) {
-    glLineWidth(lineWidth);
-    glColor4f(r, g, b, a);
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x, y);
-    glVertex2i(x + w, y);
-    glVertex2i(x + w, y + h);
-    glVertex2i(x, y + h);
-    glEnd();
-    glLineWidth(1.0f);
+    rasterizeBorder(x, y, x + w, y, x + w, y + h, x, y + h, r, g, b, a, lineWidth);
 }
 
 void HUD::drawString(int x, int y, const std::string& str, void* font, float r, float g, float b) {
-    glColor3f(r, g, b);
-    glRasterPos2i(x, y);
-    for (char c : str) {
-        glutBitmapCharacter(font, c);
-    }
+    rasterizeFont(x, y, str, font, r, g, b);
 }
 
 void HUD::drawControlLine(int x, int y, const std::string& key, const std::string& desc, void* font) {
@@ -42,15 +31,8 @@ void HUD::drawControlLine(int x, int y, const std::string& key, const std::strin
 }
 
 void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp) {
-    // Save current matrices and OpenGL state
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, width, height, 0); // Origin at top-left
-    
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    // 2D viewing transformation
+    setupOrthographicProjection(width, height);
 
     // Disable depth testing and lighting for 2D rendering
     glDisable(GL_DEPTH_TEST);
@@ -80,7 +62,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawPanel(20, startY + 4, 120, 1, 1.0f, 0.75f, 0.2f, 0.5f);
         startY += 20;
         drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Z / z", "Solve 3x3 (Layer-by-Layer)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += 35;
 
@@ -239,13 +221,10 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         glLineWidth(1.0f);
     }
 
-    // Restore state
+    // Restore viewing matrices and depth/light state
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    
+    restoreProjection();
 }

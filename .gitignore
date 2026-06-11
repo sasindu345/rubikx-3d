@@ -22,3 +22,10 @@ RubikX3D
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Compilation database
+compile_commands.json
+
+# Documentation
+docs/
+

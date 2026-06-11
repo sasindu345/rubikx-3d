@@ -1,4 +1,4 @@
-#include "ui/Menu.h"
+#include "Menu.h"
 
 Menu::Menu() {}
 Menu::~Menu() {}

@@ -1,1 +1,4 @@
-#include "ui/PatternEditor.h"
+#include "PatternEditor.h"
+
+PatternEditor::PatternEditor() {}
+PatternEditor::~PatternEditor() {}

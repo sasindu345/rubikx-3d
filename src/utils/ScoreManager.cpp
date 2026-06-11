@@ -1,4 +1,4 @@
-#include "utils/ScoreManager.h"
+#include "ScoreManager.h"
 
 ScoreManager::ScoreManager() {}
 ScoreManager::~ScoreManager() {}
