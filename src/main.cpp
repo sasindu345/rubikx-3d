@@ -35,6 +35,23 @@ SolutionPlayer solutionPlayer;
 HUD hud;
 bool showHelp = true;
 
+// Move history tracker
+std::vector<Move> moveHistory;
+
+void queueUserMove(const Move& m) {
+    // Clear any active solver playback when user manually rotates a face
+    solutionPlayer.setMoves({});
+    
+    // Maintain history (cancel adjacent inverses)
+    if (!moveHistory.empty() && moveHistory.back() == m.getInverse()) {
+        moveHistory.pop_back();
+    } else {
+        moveHistory.push_back(m);
+    }
+    
+    animation.queueMove(m);
+}
+
 // Mouse tracking state
 bool isLeftMouseDown = false;
 bool isRightMouseDown = false;
@@ -105,19 +122,17 @@ void keyboard(unsigned char key, int x, int y) {
         case 'Z':
         case 'z':
             if (!animation.isAnimating() && animation.moveQueue.empty()) {
-                if (activeCube.getSize() == 3) {
-                    std::cout << "Calculating 3x3 layer-by-layer solution..." << std::endl;
-                    Solver3x3 solver;
-                    std::vector<Move> solution = solver.solve(activeCube);
-                    std::cout << "Solution computed (" << solution.size() << " moves): ";
-                    for (const auto& m : solution) {
-                        std::cout << m.toString() << " ";
-                    }
-                    std::cout << std::endl;
-                    solutionPlayer.setMoves(solution);
-                } else {
-                    std::cout << "Solver only supported for 3x3 cubes currently." << std::endl;
+                std::cout << "Calculating backward steps from history..." << std::endl;
+                std::vector<Move> solution;
+                for (auto it = moveHistory.rbegin(); it != moveHistory.rend(); ++it) {
+                    solution.push_back(it->getInverse());
                 }
+                std::cout << "Solution computed (" << solution.size() << " moves): ";
+                for (const auto& m : solution) {
+                    std::cout << m.toString() << " ";
+                }
+                std::cout << std::endl;
+                solutionPlayer.setMoves(solution);
             }
             break;
             
@@ -171,6 +186,10 @@ void keyboard(unsigned char key, int x, int y) {
         case 's':
             if (!animation.isAnimating() && animation.moveQueue.empty()) {
                 std::cout << "Generating scramble..." << std::endl;
+                activeCube.reset();
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+
                 int steps = (activeCube.getSize() == 2) ? 10 : (activeCube.getSize() == 3) ? 20 : 25;
                 std::vector<Move> moves = Scrambler::generateScramble(activeCube.getSize(), steps);
                 isScrambling = true;
@@ -178,6 +197,7 @@ void keyboard(unsigned char key, int x, int y) {
                 std::cout << "Scramble (" << moves.size() << " moves): ";
                 for (const auto& m : moves) {
                     std::cout << m.toString() << " ";
+                    moveHistory.push_back(m);
                     animation.queueMove(m);
                 }
                 std::cout << std::endl;
@@ -185,20 +205,20 @@ void keyboard(unsigned char key, int x, int y) {
             break;
         
         // Clockwise moves (Capital letters)
-        case 'R': animation.queueMove(Move(Face::RIGHT, Direction::CW, 0)); break;
-        case 'L': animation.queueMove(Move(Face::LEFT, Direction::CW, 0)); break;
-        case 'U': animation.queueMove(Move(Face::UP, Direction::CW, 0)); break;
-        case 'D': animation.queueMove(Move(Face::DOWN, Direction::CW, 0)); break;
-        case 'F': animation.queueMove(Move(Face::FRONT, Direction::CW, 0)); break;
-        case 'B': animation.queueMove(Move(Face::BACK, Direction::CW, 0)); break;
+        case 'R': queueUserMove(Move(Face::RIGHT, Direction::CW, 0)); break;
+        case 'L': queueUserMove(Move(Face::LEFT, Direction::CW, 0)); break;
+        case 'U': queueUserMove(Move(Face::UP, Direction::CW, 0)); break;
+        case 'D': queueUserMove(Move(Face::DOWN, Direction::CW, 0)); break;
+        case 'F': queueUserMove(Move(Face::FRONT, Direction::CW, 0)); break;
+        case 'B': queueUserMove(Move(Face::BACK, Direction::CW, 0)); break;
 
         // Counter-Clockwise moves (Lowercase letters)
-        case 'r': animation.queueMove(Move(Face::RIGHT, Direction::CCW, 0)); break;
-        case 'l': animation.queueMove(Move(Face::LEFT, Direction::CCW, 0)); break;
-        case 'u': animation.queueMove(Move(Face::UP, Direction::CCW, 0)); break;
-        case 'd': animation.queueMove(Move(Face::DOWN, Direction::CCW, 0)); break;
-        case 'f': animation.queueMove(Move(Face::FRONT, Direction::CCW, 0)); break;
-        case 'b': animation.queueMove(Move(Face::BACK, Direction::CCW, 0)); break;
+        case 'r': queueUserMove(Move(Face::RIGHT, Direction::CCW, 0)); break;
+        case 'l': queueUserMove(Move(Face::LEFT, Direction::CCW, 0)); break;
+        case 'u': queueUserMove(Move(Face::UP, Direction::CCW, 0)); break;
+        case 'd': queueUserMove(Move(Face::DOWN, Direction::CCW, 0)); break;
+        case 'f': queueUserMove(Move(Face::FRONT, Direction::CCW, 0)); break;
+        case 'b': queueUserMove(Move(Face::BACK, Direction::CCW, 0)); break;
 
         default:
             std::cout << "Key pressed: " << key << " at mouse (" << x << ", " << y << ")" << std::endl;
@@ -332,6 +352,8 @@ void timer(int value) {
         activeCube.applyMove(animation.currentMove);
         if (activeCube.isSolved()) {
             std::cout << "Cube solved!" << std::endl;
+            moveHistory.clear();
+            solutionPlayer.setMoves({});
         }
     }
 
