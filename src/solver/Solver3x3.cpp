@@ -210,10 +210,10 @@ void Solver3x3::solveWhiteCross(RubiksCube& cube) {
                 else if (target.sideFace == Face::BACK) doAlg(cube, "B2");
                 else if (target.sideFace == Face::LEFT) doAlg(cube, "L2");
             } else {
-                if (target.sideFace == Face::FRONT) doAlg(cube, "D' R' F R");
-                else if (target.sideFace == Face::RIGHT) doAlg(cube, "D' B' R B");
-                else if (target.sideFace == Face::BACK) doAlg(cube, "D' L' B L");
-                else if (target.sideFace == Face::LEFT) doAlg(cube, "D' F' L F");
+                if (target.sideFace == Face::FRONT) doAlg(cube, "D R D F'");
+                else if (target.sideFace == Face::RIGHT) doAlg(cube, "D R B R'");
+                else if (target.sideFace == Face::BACK) doAlg(cube, "D L D B'");
+                else if (target.sideFace == Face::LEFT) doAlg(cube, "D F L' F'");
             }
             break;
         }
@@ -325,7 +325,7 @@ void Solver3x3::solveMiddleLayer(RubiksCube& cube) {
                 if (cubie.ix == 2 && cubie.iz == 2) doAlg(cube, "D' R' D R D F D' F'");
                 else if (cubie.ix == 0 && cubie.iz == 2) doAlg(cube, "D L D' L' D' F' D F");
                 else if (cubie.ix == 2 && cubie.iz == 0) doAlg(cube, "D' B' D B D R D' R'");
-                else if (cubie.ix == 0 && cubie.iz == 0) doAlg(cube, "D L D' L' D' B' D B");
+                else if (cubie.ix == 0 && cubie.iz == 0) doAlg(cube, "D B D' B' D' L' D L");
                 continue;
             }
             
