@@ -1,4 +1,7 @@
 #include <iostream>
+#include "core/RubiksCube.h"
+#include "core/CubeFactory.h"
+#include "core/Move.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -34,20 +37,16 @@ void display() {
 
 // Reshape callback
 void reshape(int width, int height) {
-    // Prevent division by zero
     if (height == 0) height = 1;
     
     windowWidth = width;
     windowHeight = height;
     
-    // Set viewport to cover the new window size
     glViewport(0, 0, width, height);
     
-    // Set projection matrix
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
-    // Setup simple 2D orthographic projection for the initial phase
     float aspect = (float)width / (float)height;
     if (width >= height) {
         glOrtho(-1.0 * aspect, 1.0 * aspect, -1.0, 1.0, -1.0, 1.0);
@@ -55,7 +54,6 @@ void reshape(int width, int height) {
         glOrtho(-1.0, 1.0, -1.0 / aspect, 1.0 / aspect, -1.0, 1.0);
     }
     
-    // Set modelview matrix
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -73,7 +71,7 @@ void keyboard(unsigned char key, int x, int y) {
     }
 }
 
-// Special keyboard keys (e.g. arrow keys)
+// Special keyboard keys
 void specialKeys(int key, int x, int y) {
     switch (key) {
         case GLUT_KEY_LEFT:
@@ -98,48 +96,62 @@ void mouseButton(int button, int state, int x, int y) {
     }
 }
 
-// Mouse motion (active drag) callback
-void mouseMotion(int x, int y) {
-    // Placeholder for dragging behavior
-}
+// Mouse motion callback
+void mouseMotion(int x, int y) {}
 
 // Initialize OpenGL state
 void initGL() {
-    // Set clear color to a sleek dark mode theme
     glClearColor(0.12f, 0.12f, 0.15f, 1.0f);
-    
-    // Enable depth test
     glEnable(GL_DEPTH_TEST);
-    
-    // Smooth shading
     glShadeModel(GL_SMOOTH);
     
     std::cout << "OpenGL Initialized." << std::endl;
-    std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
-    std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
-    std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
+}
+
+// Self-contained data model validation
+void testCubeState() {
+    std::cout << "\n=== Testing RubiksCube Data Model ===" << std::endl;
+    RubiksCube cube = CubeFactory::create(3);
+    std::cout << "Initial cube is solved: " << (cube.isSolved() ? "YES" : "NO") << std::endl;
+
+    // Apply move R (Right face clockwise)
+    Move rMove(Face::RIGHT, Direction::CW, 0);
+    std::cout << "Applying move: " << rMove.toString() << std::endl;
+    cube.applyMove(rMove);
+    std::cout << "Cube is solved: " << (cube.isSolved() ? "YES" : "NO") << std::endl;
+
+    // Apply inverse move R' (Right face counter-clockwise)
+    Move rPrime = rMove.getInverse();
+    std::cout << "Applying inverse move: " << rPrime.toString() << std::endl;
+    cube.applyMove(rPrime);
+    std::cout << "Cube is solved after inverse: " << (cube.isSolved() ? "YES" : "NO") << std::endl;
+
+    // Apply multiple moves
+    std::cout << "Applying scramble pattern U R' F..." << std::endl;
+    cube.applyMove(Move(Face::UP, Direction::CW, 0));
+    cube.applyMove(Move(Face::RIGHT, Direction::CCW, 0));
+    cube.applyMove(Move(Face::FRONT, Direction::CW, 0));
+    std::cout << "Cube is solved: " << (cube.isSolved() ? "YES" : "NO") << std::endl;
+
+    std::cout << "Resetting cube..." << std::endl;
+    cube.reset();
+    std::cout << "Cube is solved after reset: " << (cube.isSolved() ? "YES" : "NO") << std::endl;
+    std::cout << "=== RubiksCube Data Model Test Passed! ===\n" << std::endl;
 }
 
 int main(int argc, char** argv) {
+    // Run tests
+    testCubeState();
+
     // Initialize GLUT
     glutInit(&argc, argv);
-    
-    // Set display mode (Double buffered, RGB color, Depth buffer)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    
-    // Set initial window size
     glutInitWindowSize(windowWidth, windowHeight);
-    
-    // Set initial window position
     glutInitWindowPosition(100, 100);
-    
-    // Create window
     glutCreateWindow("RubikX-3D - Learning & Solving System");
     
-    // Initialize OpenGL functions
     initGL();
     
-    // Register callback functions
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
@@ -147,7 +159,6 @@ int main(int argc, char** argv) {
     glutMouseFunc(mouseButton);
     glutMotionFunc(mouseMotion);
     
-    // Enter the main execution loop
     glutMainLoop();
     
     return 0;

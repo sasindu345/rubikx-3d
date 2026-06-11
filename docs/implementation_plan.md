@@ -92,22 +92,22 @@ rubikx-3d/
 
 ---
 
-### Phase 2 — Math Utilities & Cube Data Model 🔲 NEXT
+### Phase 2 — Math Utilities & Cube Data Model ✅ COMPLETE
 
-- [ ] Implement `MathUtils.h/cpp` — `Vec3` struct (add, subtract, normalize, cross, dot)
-- [ ] Implement `MathUtils.h/cpp` — `Mat4` struct (identity, multiply, rotateX/Y/Z, translate, scale)
-- [ ] Implement `Colors.h/cpp` — Define 6 face colors as `Vec3` constants (White, Yellow, Red, Orange, Blue, Green) + Black for internal
-- [ ] Implement `Move.h/cpp` — `Face` enum (RIGHT, LEFT, UP, DOWN, FRONT, BACK), `Direction` enum (CW, CCW), `Move` struct, inverse function, toString
-- [ ] Implement `Cubie.h/cpp` — Grid position (ix, iy, iz), 6 face colors array, `applyRotation(Face, Direction)` to update position & colors
-- [ ] Implement `RubiksCube.h/cpp` — `int size`, `vector<Cubie> cubies`, `applyMove(Move)`, `isSolved()`, `reset()`, `getCubies()`
-- [ ] Implement `CubeFactory.h/cpp` — `static RubiksCube create(int size)` generating solved 2×2, 3×3, or 4×4
-- [ ] Verify: create cube, apply moves, check `isSolved()` returns false, reset, check returns true
-- [ ] Verify clean build passes
-- [ ] Commit Phase 2 changes to Git
+- [x] Implement `MathUtils.h/cpp` — `Vec3` struct (add, subtract, normalize, cross, dot)
+- [x] Implement `MathUtils.h/cpp` — `Mat4` struct (identity, multiply, rotateX/Y/Z, translate, scale)
+- [x] Implement `Colors.h/cpp` — Define 6 face colors as `Vec3` constants (White, Yellow, Red, Orange, Blue, Green) + Black for internal
+- [x] Implement `Move.h/cpp` — `Face` enum (RIGHT, LEFT, UP, DOWN, FRONT, BACK), `Direction` enum (CW, CCW), `Move` struct, inverse function, toString
+- [x] Implement `Cubie.h/cpp` — Grid position (ix, iy, iz), 6 face colors array, `applyRotation(Face, Direction)` to update position & colors
+- [x] Implement `RubiksCube.h/cpp` — `int size`, `vector<Cubie> cubies`, `applyMove(Move)`, `isSolved()`, `reset()`, `getCubies()`
+- [x] Implement `CubeFactory.h/cpp` — `static RubiksCube create(int size)` generating solved 2×2, 3×3, or 4×4
+- [x] Verify: create cube, apply moves, check `isSolved()` returns false, reset, check returns true
+- [x] Verify clean build passes
+- [x] Commit Phase 2 changes to Git
 
 ---
 
-### Phase 3 — 3D Rendering (Static Cube) 🔲
+### Phase 3 — 3D Rendering (Static Cube) 🔲 NEXT
 
 - [ ] Implement `Renderer.h/cpp` — `renderCube(const RubiksCube&)`: draw each cubie as 6 colored quads with `glBegin(GL_QUADS)`
 - [ ] Add visual gaps (0.05 units) between cubies for grid-line effect

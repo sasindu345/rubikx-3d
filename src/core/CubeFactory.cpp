@@ -1,4 +1,5 @@
 #include "core/CubeFactory.h"
 
-CubeFactory::CubeFactory() {}
-CubeFactory::~CubeFactory() {}
+RubiksCube CubeFactory::create(int size) {
+    return RubiksCube(size);
+}
