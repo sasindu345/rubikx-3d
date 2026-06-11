@@ -9,6 +9,7 @@
 #include "solver/Scrambler.h"
 #include "solver/Solver3x3.h"
 #include "ui/SolutionPlayer.h"
+#include "ui/HUD.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -31,6 +32,8 @@ bool isScrambling = false;
 
 // Solution player
 SolutionPlayer solutionPlayer;
+HUD hud;
+bool showHelp = true;
 
 // Mouse tracking state
 bool isLeftMouseDown = false;
@@ -55,6 +58,9 @@ void display() {
     
     // Render the Rubik's Cube with active animations
     renderer.renderCube(activeCube, animation);
+    
+    // Render 2D HUD Help Menu overlay
+    hud.render(windowWidth, windowHeight, solutionPlayer, showHelp);
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -86,6 +92,13 @@ void keyboard(unsigned char key, int x, int y) {
         case 27: // Escape key
             std::cout << "Exiting application." << std::endl;
             exit(0);
+            break;
+        
+        // Toggle Help (H/h)
+        case 'H':
+        case 'h':
+            showHelp = !showHelp;
+            glutPostRedisplay();
             break;
         
         // Solve (Z/z)

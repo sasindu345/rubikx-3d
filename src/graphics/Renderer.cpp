@@ -20,31 +20,31 @@ void Renderer::drawCubieBase(float size) {
     glBegin(GL_QUADS);
     // Right face (+X)
     glNormal3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(h, -h,  h);
     glVertex3f(h, -h, -h);
     glVertex3f(h,  h, -h);
     glVertex3f(h,  h,  h);
+    glVertex3f(h, -h,  h);
 
     // Left face (-X)
     glNormal3f(-1.0f, 0.0f, 0.0f);
-    glVertex3f(-h, -h, -h);
     glVertex3f(-h, -h,  h);
     glVertex3f(-h,  h,  h);
     glVertex3f(-h,  h, -h);
+    glVertex3f(-h, -h, -h);
 
     // Up face (+Y)
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-h,  h, -h);
     glVertex3f(-h,  h,  h);
     glVertex3f( h,  h,  h);
     glVertex3f( h,  h, -h);
+    glVertex3f(-h,  h, -h);
 
     // Down face (-Y)
     glNormal3f(0.0f, -1.0f, 0.0f);
-    glVertex3f(-h, -h,  h);
     glVertex3f(-h, -h, -h);
     glVertex3f( h, -h, -h);
     glVertex3f( h, -h,  h);
+    glVertex3f(-h, -h,  h);
 
     // Front face (+Z)
     glNormal3f(0.0f, 0.0f, 1.0f);
@@ -76,31 +76,31 @@ void Renderer::drawFacelet(Face face, Colors::ColorName color) {
     switch (face) {
         case Face::RIGHT:
             glNormal3f(1.0f, 0.0f, 0.0f);
-            glVertex3f(offset, -w,  w);
             glVertex3f(offset, -w, -w);
             glVertex3f(offset,  w, -w);
             glVertex3f(offset,  w,  w);
+            glVertex3f(offset, -w,  w);
             break;
         case Face::LEFT:
             glNormal3f(-1.0f, 0.0f, 0.0f);
-            glVertex3f(-offset, -w, -w);
             glVertex3f(-offset, -w,  w);
             glVertex3f(-offset,  w,  w);
             glVertex3f(-offset,  w, -w);
+            glVertex3f(-offset, -w, -w);
             break;
         case Face::UP:
             glNormal3f(0.0f, 1.0f, 0.0f);
-            glVertex3f(-w, offset, -w);
             glVertex3f(-w, offset,  w);
             glVertex3f( w, offset,  w);
             glVertex3f( w, offset, -w);
+            glVertex3f(-w, offset, -w);
             break;
         case Face::DOWN:
             glNormal3f(0.0f, -1.0f, 0.0f);
-            glVertex3f(-w, -offset,  w);
             glVertex3f(-w, -offset, -w);
             glVertex3f( w, -offset, -w);
             glVertex3f( w, -offset,  w);
+            glVertex3f(-w, -offset,  w);
             break;
         case Face::FRONT:
             glNormal3f(0.0f, 0.0f, 1.0f);
