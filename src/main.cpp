@@ -197,6 +197,38 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
         
+        // Switch Cube Size (3: 3x3, 4: 4x4, 5: 5x5)
+        case '3':
+            if (activeCube.getSize() != 3) {
+                activeCube = CubeFactory::create(3);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                camera.radius = 10.0f; // Reset zoom to default
+                std::cout << "Switched to 3x3 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+        case '4':
+            if (activeCube.getSize() != 4) {
+                activeCube = CubeFactory::create(4);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                camera.radius = 12.0f; // Zoom out slightly for larger cube
+                std::cout << "Switched to 4x4 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+        case '5':
+            if (activeCube.getSize() != 5) {
+                activeCube = CubeFactory::create(5);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                camera.radius = 14.0f; // Zoom out further for 5x5 cube
+                std::cout << "Switched to 5x5 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+
         // Clockwise moves (Capital letters)
         case 'R': queueUserMove(Move(Face::RIGHT, Direction::CW, 0)); break;
         case 'L': queueUserMove(Move(Face::LEFT, Direction::CW, 0)); break;

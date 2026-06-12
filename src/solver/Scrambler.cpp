@@ -13,8 +13,8 @@ std::vector<Move> Scrambler::generateScramble(int size, int steps) {
     std::uniform_int_distribution<int> faceDist(0, 5);
     std::uniform_int_distribution<int> dirDist(0, 1);
     
-    // For 4x4, we allow outer layer (0) and inner slice (1)
-    int maxLayer = (size >= 4) ? 1 : 0;
+    // For larger cubes (>= 4x4), we allow inner slice turns
+    int maxLayer = (size >= 4) ? (size - 1) / 2 : 0;
     std::uniform_int_distribution<int> layerDist(0, maxLayer);
 
     Face lastFace = static_cast<Face>(-1);
