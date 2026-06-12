@@ -30,7 +30,7 @@ void HUD::drawControlLine(int x, int y, const std::string& key, const std::strin
     drawString(x + 75, y, desc, font, 0.85f, 0.85f, 0.9f);
 }
 
-void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp) {
+void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending) {
     // 2D viewing transformation
     setupOrthographicProjection(width, height);
 
@@ -67,7 +67,8 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawControlLine(20, startY, "3", "Switch to 3x3 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "4", "Switch to 4x4 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "5", "Switch to 5x5 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += 35;
+        drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "T / t", "Toggle Glass Cube (Alpha Blend)", GLUT_BITMAP_8_BY_13); startY += 35;
 
         // --- SOLUTION PLAYBACK ---
         drawString(20, startY, "PLAYBACK CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
@@ -102,6 +103,25 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawPanel(10, 10, 190, 30, 0.08f, 0.08f, 0.1f, 0.75f);
         drawBorder(10, 10, 190, 30, 0.2f, 0.4f, 0.6f, 0.5f, 1.0f);
         drawString(20, 30, "Press 'H' for Help Menu", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f);
+    }
+
+    // Glass Cube status badge (top-right corner, always visible)
+    {
+        int badgeW = 200;
+        int badgeX = width - badgeW - 10;
+        int badgeY = 10;
+        int badgeH = 28;
+        if (alphaBlending) {
+            // Glowing teal badge when ON
+            drawPanel(badgeX, badgeY, badgeW, badgeH, 0.0f, 0.35f, 0.45f, 0.85f);
+            drawBorder(badgeX, badgeY, badgeW, badgeH, 0.0f, 0.8f, 1.0f, 0.9f, 1.5f);
+            drawString(badgeX + 12, badgeY + 19, "GLASS CUBE  [T] ON", GLUT_BITMAP_HELVETICA_12, 0.0f, 1.0f, 0.9f);
+        } else {
+            // Dimmed badge when OFF
+            drawPanel(badgeX, badgeY, badgeW, badgeH, 0.08f, 0.08f, 0.1f, 0.65f);
+            drawBorder(badgeX, badgeY, badgeW, badgeH, 0.2f, 0.2f, 0.25f, 0.5f, 1.0f);
+            drawString(badgeX + 12, badgeY + 19, "GLASS CUBE  [T] OFF", GLUT_BITMAP_HELVETICA_12, 0.4f, 0.4f, 0.45f);
+        }
     }
 
     // 2. Playback Dashboard (Bottom Center)
