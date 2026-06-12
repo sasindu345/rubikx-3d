@@ -14,5 +14,6 @@ public:
     ~HUD();
 
     // Renders the 2D overlays (controls menu, playback dashboards, status hints)
-    void render(int width, int height, const SolutionPlayer& player, bool showHelp);
+    // alphaBlending: current glass cube mode state (for status display)
+    void render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending = false);
 };

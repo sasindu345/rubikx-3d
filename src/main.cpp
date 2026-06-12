@@ -32,6 +32,9 @@ Animation animation;
 // Scrambling state
 bool isScrambling = false;
 
+// Alpha Blending / Glass Cube mode toggle
+bool alphaBlendingEnabled = false;
+
 // Solution player
 SolutionPlayer solutionPlayer;
 HUD hud;
@@ -74,12 +77,15 @@ void display() {
     
     // Position lighting in scene space (after camera transformation so lights are stationary in world space)
     Lighting::apply();
+
+    // Sync alpha blending state with renderer before drawing
+    renderer.alphaBlending = alphaBlendingEnabled;
     
     // Render the Rubik's Cube with active animations
     renderer.renderCube(activeCube, animation);
     
     // Render 2D HUD Help Menu overlay
-    hud.render(windowWidth, windowHeight, solutionPlayer, showHelp);
+    hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled);
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -111,6 +117,20 @@ void keyboard(unsigned char key, int x, int y) {
         case 'H':
         case 'h':
             showHelp = !showHelp;
+            glutPostRedisplay();
+            break;
+
+        // Toggle Alpha Blending / Glass Cube mode (T/t)
+        // Theory: Alpha Compositing — C_out = C_src*A_src + C_dst*(1-A_src)
+        // Renders cubie bases as semi-transparent glass using GL_BLEND.
+        // Back-to-front Painter's Algorithm sort ensures correct layering.
+        case 'T':
+        case 't':
+            alphaBlendingEnabled = !alphaBlendingEnabled;
+            std::cout << "[Alpha Blending] Glass Cube mode: "
+                      << (alphaBlendingEnabled ? "ON  (GL_BLEND enabled, Painter's sort active)"
+                                               : "OFF (normal opaque rendering)")
+                      << std::endl;
             glutPostRedisplay();
             break;
         
@@ -403,10 +423,10 @@ int main(int argc, char** argv) {
 
     // Initialize GLUT
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("RubikX-3D - Learning & Solving System");
+    glutCreateWindow("RubikX-3D | Learning & Solving System | Press T for Glass Cube");
     
     initGL();
     
