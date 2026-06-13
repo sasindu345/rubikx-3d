@@ -34,11 +34,6 @@ void ScoreManager::recordMove() {
     }
 }
 
-double ScoreManager::getElapsedSeconds() const {
-    if (!active) return 0.0;
-    auto now = std::chrono::steady_clock::now();
-    return std::chrono::duration<double>(now - startTime).count();
-}
 
 int ScoreManager::computeScore(int cubeSize, int moves, double timeSeconds) {
     // Base pool of points available for a "perfect" (instant, zero extra move) solve.
@@ -164,4 +159,25 @@ void ScoreManager::appendToFile(const ScoreEntry& entry) {
           << entry.timeSeconds << ","
           << entry.score << ","
           << entry.timestamp << "\n";
+}
+
+double ScoreManager::getElapsedSeconds() const {
+    if (!active) return 0.0;
+    if (paused) {
+        return std::chrono::duration<double>(pauseStartTime - startTime).count() - pausedAccumulated;
+    }
+    auto now = std::chrono::steady_clock::now();
+    return std::chrono::duration<double>(now - startTime).count() - pausedAccumulated;
+}
+
+void ScoreManager::togglePause() {
+    if (!active) return;
+    auto now = std::chrono::steady_clock::now();
+    if (!paused) {
+        pauseStartTime = now;
+        paused = true;
+    } else {
+        pausedAccumulated += std::chrono::duration<double>(now - pauseStartTime).count();
+        paused = false;
+    }
 }

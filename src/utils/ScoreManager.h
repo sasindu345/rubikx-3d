@@ -68,4 +68,13 @@ private:
 
     void loadHistory();
     void appendToFile(const ScoreEntry& entry);
+
+public:
+    void togglePause();
+    bool isPaused() const { return paused; }
+
+private:
+    bool paused = false;
+    double pausedAccumulated = 0.0; // seconds accumulated before the current pause
+    std::chrono::steady_clock::time_point pauseStartTime;
 };

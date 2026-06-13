@@ -51,7 +51,7 @@ void queueUserMove(const Move& m) {
 
     // Count this as a solving move for scoring (only while a timed session
     // is active and we're not in the middle of an auto-scramble)
-    if (!isScrambling) {
+    if (!isScrambling && !scoreManager.isPaused()) {
         scoreManager.recordMove();
     }
 
@@ -228,6 +228,11 @@ void keyboard(unsigned char key, int x, int y) {
                 }
                 std::cout << std::endl;
             }
+            break;
+
+        case ' ':
+            scoreManager.togglePause();
+            std::cout << (scoreManager.isPaused() ? "Timer paused." : "Timer resumed.") << std::endl;
             break;
         
         // Switch Cube Size (2: 2x2, 3: 3x3, 4: 4x4, 5: 5x5, 6: 6x6, 7: 7x7)

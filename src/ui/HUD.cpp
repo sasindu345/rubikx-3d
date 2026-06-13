@@ -63,6 +63,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         startY += 20;
         drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Space", "Pause/Resume timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "2", "Switch to 2x2 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "3", "Switch to 3x3 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
@@ -278,11 +279,15 @@ void HUD::renderScorePanel(int width, int height, const ScoreManager& scoreManag
 
         drawString(panelX + 12, panelY + 18, "SOLVE IN PROGRESS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
 
-        double t = scoreManager.getElapsedSeconds();
-        int mins = (int)(t / 60.0);
-        double secs = t - mins * 60.0;
-        snprintf(buf, sizeof(buf), "Time:  %02d:%05.2f", mins, secs);
-        drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+        if (scoreManager.isPaused()) {
+            drawString(panelX + 12, panelY + 40, "Time:  [PAUSED]", GLUT_BITMAP_8_BY_13, 1.0f, 0.55f, 0.0f);
+        } else {
+            double t = scoreManager.getElapsedSeconds();
+            int mins = (int)(t / 60.0);
+            double secs = t - mins * 60.0;
+            snprintf(buf, sizeof(buf), "Time:  %02d:%05.2f", mins, secs);
+            drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+        }
 
         snprintf(buf, sizeof(buf), "Moves: %d", scoreManager.getMoveCount());
         drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
