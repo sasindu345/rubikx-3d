@@ -1,26 +1,21 @@
 #include "Colors.h"
 
 namespace Colors {
-    // Premium tailored colors for modern aesthetics
-    const Vec3 RGB_WHITE(1.0f, 1.0f, 1.0f);
-    const Vec3 RGB_YELLOW(0.95f, 0.85f, 0.1f);
-    const Vec3 RGB_RED(0.85f, 0.15f, 0.15f);
-    const Vec3 RGB_ORANGE(0.95f, 0.5f, 0.05f);
-    const Vec3 RGB_BLUE(0.1f, 0.4f, 0.85f);
-    const Vec3 RGB_GREEN(0.15f, 0.7f, 0.25f);
-    const Vec3 RGB_BLACK(0.08f, 0.08f, 0.1f);
+    static Colors::Scheme currentScheme = Colors::Scheme::CLASSIC;
+
+    static const Vec3 PALETTES[3][6] = {
+        /* CLASSIC */       { {1,1,1}, {1,0.85f,0}, {0.8f,0,0}, {1,0.45f,0}, {0,0.3f,1}, {0,0.6f,0.2f} },
+        /* PASTEL */        { {0.95f,0.95f,0.95f}, {1,0.95f,0.6f}, {0.95f,0.6f,0.6f}, {1,0.75f,0.5f}, {0.6f,0.75f,1}, {0.65f,0.9f,0.7f} },
+        /* HIGH_CONTRAST */ { {1,1,1}, {1,1,0}, {1,0,0}, {1,0.5f,0}, {0,0,1}, {0,1,0} },
+    };
+
+    void setScheme(Scheme s) { currentScheme = s; }
+    Scheme getScheme() { return currentScheme; }
 
     Vec3 getColorVec(ColorName color) {
-        switch (color) {
-            case WHITE:  return RGB_WHITE;
-            case YELLOW: return RGB_YELLOW;
-            case RED:    return RGB_RED;
-            case ORANGE: return RGB_ORANGE;
-            case BLUE:   return RGB_BLUE;
-            case GREEN:  return RGB_GREEN;
-            case BLACK:  return RGB_BLACK;
-            default:     return RGB_BLACK;
-        }
+        if (color == BLACK) return {0.08f, 0.08f, 0.1f};
+        if (color == NONE)  return {0,0,0};
+        return PALETTES[(int)currentScheme][color];
     }
 
     const char* getColorNameString(ColorName color) {

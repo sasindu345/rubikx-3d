@@ -12,6 +12,7 @@
 #include "ui/HUD.h"
 #include "algorithms/Algorithms.h"
 #include "utils/ScoreManager.h"
+#include "Colors.h"
 
 
 #ifdef __APPLE__
@@ -264,9 +265,9 @@ void keyboard(unsigned char key, int x, int y) {
             std::cout << "Practice mode: " << (practiceMode ? "ON (scores won't be saved)" : "OFF") << std::endl;
             break;
             
-        // Reset Cube (C/c)
-        case 'C':
-        case 'c':
+        // Reset Cube (X/x)
+        case 'X':
+        case 'x':
             if (!animation.isAnimating() && animation.moveQueue.empty()) {
                 std::cout << "Resetting cube to solved state..." << std::endl;
                 activeCube.reset();
@@ -276,6 +277,16 @@ void keyboard(unsigned char key, int x, int y) {
                 glutPostRedisplay();
             }
             break;
+            
+        // Cycle Color Schemes (C/c)
+        case 'C':
+        case 'c': {
+            int next = (((int)Colors::getScheme()) + 1) % (int)Colors::Scheme::COUNT;
+            Colors::setScheme((Colors::Scheme)next);
+            std::cout << "Color scheme changed." << std::endl;
+            glutPostRedisplay();
+            break;
+        }
         
         // Switch Cube Size (2: 2x2, 3: 3x3, 4: 4x4, 5: 5x5, 6: 6x6, 7: 7x7)
         case '2':

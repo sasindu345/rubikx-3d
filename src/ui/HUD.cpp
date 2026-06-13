@@ -64,7 +64,8 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Y / y", "Retry previous scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "C / c", "Reset cube to solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "C / c", "Cycle color scheme", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "X / x", "Reset cube to solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Space", "Pause/Resume timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "M / m", "Toggle practice mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
