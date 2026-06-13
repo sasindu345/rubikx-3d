@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+#include <string>
 #include "cube/RubiksCube.h"
 #include "cube/CubeFactory.h"
 #include "cube/Move.h"
@@ -43,6 +45,7 @@ HUD hud;
 ScoreManager scoreManager;
 bool showHelp = true;
 bool practiceMode = false;
+bool awaitingAlgInput = false;
 
 // Move history tracker
 std::vector<Move> moveHistory;
@@ -231,6 +234,31 @@ void keyboard(unsigned char key, int x, int y) {
                     animation.queueMove(m);
                 }
                 std::cout << std::endl;
+            }
+            break;
+            
+        case 'A':
+        case 'a':
+            if (!animation.isAnimating() && animation.moveQueue.empty()) {
+                awaitingAlgInput = true;
+                std::cout << "\nEnter algorithm (e.g. \"R U R' U'\").\n"
+                          << "Note: Type in the terminal window, then press Enter.\n"
+                          << "> ";
+                std::string line;
+                std::getline(std::cin, line);
+
+                std::istringstream iss(line);
+                std::string token;
+                std::vector<Move> alg;
+                while (iss >> token) {
+                    alg.push_back(Move::parse(token));
+                }
+
+                std::cout << "Queuing " << alg.size() << " moves." << std::endl;
+                for (const auto& m : alg) {
+                    queueUserMove(m);
+                }
+                awaitingAlgInput = false;
             }
             break;
             
