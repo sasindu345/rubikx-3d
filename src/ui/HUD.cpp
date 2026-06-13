@@ -61,6 +61,9 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawPanel(20, startY + 4, 120, 1, 1.0f, 0.75f, 0.2f, 0.5f);
         startY += 20;
         drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Shift + 1", "Pattern: Checkerboard", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Shift + 2", "Pattern: Superflip", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Shift + 3", "Pattern: Cube in Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Y / y", "Retry previous scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "A / a", "Input algorithm notation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;

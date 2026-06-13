@@ -15,6 +15,7 @@
 #include "algorithms/Algorithms.h"
 #include "utils/ScoreManager.h"
 #include "Colors.h"
+#include "solver/PatternLibrary.h"
 
 
 #ifdef __APPLE__
@@ -69,6 +70,39 @@ void queueUserMove(const Move& m) {
     }
     
     animation.queueMove(m);
+}
+
+void applyPattern3x3(int index) {
+    if (activeCube.getSize() != 3) {
+        std::cout << "Patterns currently only defined for 3x3." << std::endl;
+        return;
+    }
+    if (!animation.isAnimating() && animation.moveQueue.empty()) {
+        activeCube.reset();
+        moveHistory.clear();
+        solutionPlayer.setMoves({});
+        scoreManager.cancelSession();
+
+        auto patterns = PatternLibrary::getPatterns3x3();
+        if (index < 0 || index >= patterns.size()) return;
+        const auto& pattern = patterns[index];
+        std::cout << "Applying pattern: " << pattern.name << std::endl;
+        for (const auto& tok : pattern.algorithm) {
+            std::string parseToken = tok;
+            bool isDouble = false;
+            if (!parseToken.empty() && parseToken.back() == '2') {
+                isDouble = true;
+                parseToken.pop_back(); // Remove '2'
+            }
+            Move m = Move::parse(parseToken);
+            moveHistory.push_back(m);
+            animation.queueMove(m);
+            if (isDouble) {
+                moveHistory.push_back(m);
+                animation.queueMove(m);
+            }
+        }
+    }
 }
 
 // Mouse tracking state
@@ -210,6 +244,11 @@ void keyboard(unsigned char key, int x, int y) {
         case '_':
             solutionPlayer.adjustSpeed(-0.1f);
             break;
+            
+        // Patterns (!, @, #)
+        case '!': applyPattern3x3(0); break; // Checkerboard
+        case '@': applyPattern3x3(1); break; // Superflip
+        case '#': applyPattern3x3(2); break; // Cube in Cube
         
         // Scramble
         case 'S':
