@@ -26,6 +26,61 @@ struct CubieTransformData {
 Renderer::Renderer() {}
 Renderer::~Renderer() {}
 
+void Renderer::initTexture() {
+    if (textureId != 0) return;
+    
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    #ifdef GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    #else
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    #endif
+    
+    // Generate a procedural texture (rounded corner sticker shape)
+    const int texSize = 64;
+    GLubyte texData[texSize][texSize][4];
+    for (int y = 0; y < texSize; ++y) {
+        for (int x = 0; x < texSize; ++x) {
+            // Normalize coordinates to [-1, 1]
+            float nx = (x - texSize / 2.0f) / (texSize / 2.0f);
+            float ny = (y - texSize / 2.0f) / (texSize / 2.0f);
+            
+            // Rounded corners formula: x^4 + y^4 = r^4.
+            float dist = std::pow(nx, 4.0f) + std::pow(ny, 4.0f);
+            
+            GLubyte r = 255, g = 255, b = 255, a = 255;
+            
+            if (dist > 1.0f) {
+                // Outside the sticker corner - make transparent
+                r = 0; g = 0; b = 0; a = 0;
+            } else if (dist > 0.7f) {
+                // Sticker border/edge - dark gray/black border
+                r = 20; g = 20; b = 20; a = 255;
+            } else {
+                // Sticker body: nice subtle radial gradient
+                float innerDist = std::sqrt(nx*nx + ny*ny);
+                GLubyte val = (GLubyte)(255 - innerDist * 60); // subtle gradient from 255 to 195
+                r = val; g = val; b = val; a = 255;
+            }
+            
+            texData[y][x][0] = r;
+            texData[y][x][1] = g;
+            texData[y][x][2] = b;
+            texData[y][x][3] = a;
+        }
+    }
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSize, texSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
+}
+
 // -----------------------------------------------------------
 // drawCubieBase
 // Draws the solid black structural cube for each cubie.
@@ -37,8 +92,13 @@ void Renderer::drawCubieBase(float size, float alpha) {
 
     // Use glColor4f so alpha is forwarded to the blending pipeline.
     // GL_COLOR_MATERIAL ensures this feeds into the lighting material.
-    Vec3 blackVec = Colors::getColorVec(Colors::BLACK);
-    glColor4f(blackVec.x, blackVec.y, blackVec.z, alpha);
+    if (renderMode == RenderMode::WIREFRAME) {
+        // Draw in dark gray-blue cage so wireframe base is visible on the dark background
+        glColor4f(0.25f, 0.25f, 0.3f, alpha);
+    } else {
+        Vec3 blackVec = Colors::getColorVec(Colors::BLACK);
+        glColor4f(blackVec.x, blackVec.y, blackVec.z, alpha);
+    }
 
     glBegin(GL_QUADS);
     // Right face (+X)
@@ -93,8 +153,17 @@ void Renderer::drawCubieBase(float size, float alpha) {
 void Renderer::drawFacelet(Face face, Colors::ColorName color, float alpha) {
     if (color == Colors::NONE) return;
 
+    bool textured = (renderMode == RenderMode::TEXTURED && textureId != 0);
+
     Vec3 colorVec = Colors::getColorVec(color);
     glColor4f(colorVec.x, colorVec.y, colorVec.z, alpha);
+
+    if (textured) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
     // offset is slightly larger than base box half-size to avoid z-fighting
     float offset = 0.49f;
@@ -104,48 +173,55 @@ void Renderer::drawFacelet(Face face, Colors::ColorName color, float alpha) {
     switch (face) {
         case Face::RIGHT:
             glNormal3f(1.0f, 0.0f, 0.0f);
-            glVertex3f(offset, -w, -w);
-            glVertex3f(offset,  w, -w);
-            glVertex3f(offset,  w,  w);
-            glVertex3f(offset, -w,  w);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(offset, -w, -w);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f(offset,  w, -w);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f(offset,  w,  w);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(offset, -w,  w);
             break;
         case Face::LEFT:
             glNormal3f(-1.0f, 0.0f, 0.0f);
-            glVertex3f(-offset, -w,  w);
-            glVertex3f(-offset,  w,  w);
-            glVertex3f(-offset,  w, -w);
-            glVertex3f(-offset, -w, -w);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-offset, -w,  w);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f(-offset,  w,  w);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f(-offset,  w, -w);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-offset, -w, -w);
             break;
         case Face::UP:
             glNormal3f(0.0f, 1.0f, 0.0f);
-            glVertex3f(-w, offset,  w);
-            glVertex3f( w, offset,  w);
-            glVertex3f( w, offset, -w);
-            glVertex3f(-w, offset, -w);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-w, offset,  w);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( w, offset,  w);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( w, offset, -w);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-w, offset, -w);
             break;
         case Face::DOWN:
             glNormal3f(0.0f, -1.0f, 0.0f);
-            glVertex3f(-w, -offset, -w);
-            glVertex3f( w, -offset, -w);
-            glVertex3f( w, -offset,  w);
-            glVertex3f(-w, -offset,  w);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-w, -offset, -w);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( w, -offset, -w);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( w, -offset,  w);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-w, -offset,  w);
             break;
         case Face::FRONT:
             glNormal3f(0.0f, 0.0f, 1.0f);
-            glVertex3f(-w, -w, offset);
-            glVertex3f( w, -w, offset);
-            glVertex3f( w,  w, offset);
-            glVertex3f(-w,  w, offset);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-w, -w, offset);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( w, -w, offset);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( w,  w, offset);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-w,  w, offset);
             break;
         case Face::BACK:
             glNormal3f(0.0f, 0.0f, -1.0f);
-            glVertex3f( w, -w, -offset);
-            glVertex3f(-w, -w, -offset);
-            glVertex3f(-w,  w, -offset);
-            glVertex3f( w,  w, -offset);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f( w, -w, -offset);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f(-w, -w, -offset);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f(-w,  w, -offset);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f( w,  w, -offset);
             break;
     }
     glEnd();
+
+    if (textured) {
+        glDisable(GL_TEXTURE_2D);
+        if (!alphaBlending) {
+            glDisable(GL_BLEND);
+        }
+    }
 }
 
 // -----------------------------------------------------------
@@ -175,6 +251,15 @@ void Renderer::applyCubieRenderTransform(const CubieTransformData& d) {
 //             Sorting prevents occlusion artefacts between transparent faces.
 // -----------------------------------------------------------
 void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
+    if (renderMode == RenderMode::TEXTURED) {
+        initTexture();
+    }
+
+    if (renderMode == RenderMode::WIREFRAME) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDisable(GL_LIGHTING);
+    }
+
     int size = cube.getSize();
     float halfSize = (size - 1) / 2.0f;
 
@@ -210,6 +295,10 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
 
             restoreTransform();
         }
+        
+        // Restore OpenGL state to defaults
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_LIGHTING);
         return;
     }
 
@@ -282,6 +371,8 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
     }
 
     // Restore OpenGL state to defaults
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_LIGHTING);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 }

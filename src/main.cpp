@@ -85,7 +85,7 @@ void display() {
     renderer.renderCube(activeCube, animation);
     
     // Render 2D HUD Help Menu overlay
-    hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled);
+    hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode));
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -131,6 +131,22 @@ void keyboard(unsigned char key, int x, int y) {
                       << (alphaBlendingEnabled ? "ON  (GL_BLEND enabled, Painter's sort active)"
                                                : "OFF (normal opaque rendering)")
                       << std::endl;
+            glutPostRedisplay();
+            break;
+
+        // Toggle Rendering Mode: Solid -> Wireframe -> Textured -> Solid (W/w)
+        case 'W':
+        case 'w':
+            if (renderer.renderMode == RenderMode::SOLID) {
+                renderer.renderMode = RenderMode::WIREFRAME;
+                std::cout << "[Render Mode] Switched to WIREFRAME" << std::endl;
+            } else if (renderer.renderMode == RenderMode::WIREFRAME) {
+                renderer.renderMode = RenderMode::TEXTURED;
+                std::cout << "[Render Mode] Switched to TEXTURED" << std::endl;
+            } else {
+                renderer.renderMode = RenderMode::SOLID;
+                std::cout << "[Render Mode] Switched to SOLID" << std::endl;
+            }
             glutPostRedisplay();
             break;
         

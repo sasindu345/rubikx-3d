@@ -15,5 +15,6 @@ public:
 
     // Renders the 2D overlays (controls menu, playback dashboards, status hints)
     // alphaBlending: current glass cube mode state (for status display)
-    void render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending = false);
+    // renderMode: current rendering mode (0 = Solid, 1 = Wireframe, 2 = Textured)
+    void render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending = false, int renderMode = 0);
 };

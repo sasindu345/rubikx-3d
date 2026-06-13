@@ -30,7 +30,7 @@ void HUD::drawControlLine(int x, int y, const std::string& key, const std::strin
     drawString(x + 75, y, desc, font, 0.85f, 0.85f, 0.9f);
 }
 
-void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending) {
+void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending, int renderMode) {
     // 2D viewing transformation
     setupOrthographicProjection(width, height);
 
@@ -68,7 +68,8 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawControlLine(20, startY, "4", "Switch to 4x4 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "5", "Switch to 5x5 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "T / t", "Toggle Glass Cube (Alpha Blend)", GLUT_BITMAP_8_BY_13); startY += 35;
+        drawControlLine(20, startY, "T / t", "Toggle Glass Cube (Alpha Blend)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "W / w", "Cycle Render Mode (Solid/Wire/Tex)", GLUT_BITMAP_8_BY_13); startY += 35;
 
         // --- SOLUTION PLAYBACK ---
         drawString(20, startY, "PLAYBACK CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
@@ -122,6 +123,31 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
             drawBorder(badgeX, badgeY, badgeW, badgeH, 0.2f, 0.2f, 0.25f, 0.5f, 1.0f);
             drawString(badgeX + 12, badgeY + 19, "GLASS CUBE  [T] OFF", GLUT_BITMAP_HELVETICA_12, 0.4f, 0.4f, 0.45f);
         }
+    }
+
+    // Render Mode status badge (top-right corner, below Glass Cube badge)
+    {
+        int badgeW = 200;
+        int badgeX = width - badgeW - 10;
+        int badgeY = 45; // Below the Glass Cube badge
+        int badgeH = 28;
+        
+        std::string modeText;
+        float r = 0.5f, g = 0.5f, b = 0.5f;
+        if (renderMode == 1) { // WIREFRAME
+            modeText = "MODE: WIREFRAME [W]";
+            r = 0.9f; g = 0.3f; b = 0.3f;
+        } else if (renderMode == 2) { // TEXTURED
+            modeText = "MODE: TEXTURED  [W]";
+            r = 0.0f; g = 0.85f; b = 0.4f;
+        } else { // SOLID
+            modeText = "MODE: SOLID     [W]";
+            r = 0.0f; g = 0.8f; b = 1.0f;
+        }
+
+        drawPanel(badgeX, badgeY, badgeW, badgeH, r * 0.25f, g * 0.25f, b * 0.25f, 0.85f);
+        drawBorder(badgeX, badgeY, badgeW, badgeH, r, g, b, 0.9f, 1.5f);
+        drawString(badgeX + 12, badgeY + 19, modeText, GLUT_BITMAP_HELVETICA_12, r, g, b);
     }
 
     // 2. Playback Dashboard (Bottom Center)
