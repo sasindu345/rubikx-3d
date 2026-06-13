@@ -22,4 +22,7 @@ public:
     // live move counter + stopwatch while solving, and the score/best
     // score once a solve has been completed.
     void renderScorePanel(int width, int height, const ScoreManager& scoreManager, int cubeSize, bool practiceMode);
+
+    // Renders the stats panel showing Ao5, Ao12, and totals
+    void renderStatsPanel(int width, int height, const ScoreManager& scoreManager, int cubeSize);
 };

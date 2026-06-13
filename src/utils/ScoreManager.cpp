@@ -181,3 +181,16 @@ void ScoreManager::togglePause() {
         paused = false;
     }
 }
+
+double ScoreManager::getAverageOfN(int cubeSize, int n) const {
+    auto recent = getHistory(cubeSize, n);
+    if ((int)recent.size() < n) return -1.0; // not enough data yet
+
+    std::vector<double> times;
+    for (const auto& e : recent) times.push_back(e.timeSeconds);
+    std::sort(times.begin(), times.end());
+
+    double sum = 0.0;
+    for (int i = 1; i < n - 1; ++i) sum += times[i]; // drop best & worst
+    return sum / (n - 2);
+}

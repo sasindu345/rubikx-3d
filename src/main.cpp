@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+#include <string>
 #include "cube/RubiksCube.h"
 #include "cube/CubeFactory.h"
 #include "cube/Move.h"
@@ -13,6 +15,7 @@
 #include "algorithms/Algorithms.h"
 #include "utils/ScoreManager.h"
 #include "Colors.h"
+#include "solver/PatternLibrary.h"
 
 
 #ifdef __APPLE__
@@ -43,6 +46,8 @@ HUD hud;
 ScoreManager scoreManager;
 bool showHelp = true;
 bool practiceMode = false;
+bool awaitingAlgInput = false;
+bool showStats = false;
 
 // Move history tracker
 std::vector<Move> moveHistory;
@@ -66,6 +71,39 @@ void queueUserMove(const Move& m) {
     }
     
     animation.queueMove(m);
+}
+
+void applyPattern3x3(int index) {
+    if (activeCube.getSize() != 3) {
+        std::cout << "Patterns currently only defined for 3x3." << std::endl;
+        return;
+    }
+    if (!animation.isAnimating() && animation.moveQueue.empty()) {
+        activeCube.reset();
+        moveHistory.clear();
+        solutionPlayer.setMoves({});
+        scoreManager.cancelSession();
+
+        auto patterns = PatternLibrary::getPatterns3x3();
+        if (index < 0 || index >= patterns.size()) return;
+        const auto& pattern = patterns[index];
+        std::cout << "Applying pattern: " << pattern.name << std::endl;
+        for (const auto& tok : pattern.algorithm) {
+            std::string parseToken = tok;
+            bool isDouble = false;
+            if (!parseToken.empty() && parseToken.back() == '2') {
+                isDouble = true;
+                parseToken.pop_back(); // Remove '2'
+            }
+            Move m = Move::parse(parseToken);
+            moveHistory.push_back(m);
+            animation.queueMove(m);
+            if (isDouble) {
+                moveHistory.push_back(m);
+                animation.queueMove(m);
+            }
+        }
+    }
 }
 
 // Mouse tracking state
@@ -100,6 +138,10 @@ void display() {
 
     // Render scoring panel (top-right): live timer/move counter or last result
     hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
+
+    if (showStats) {
+        hud.renderStatsPanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
+    }
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -127,10 +169,17 @@ void keyboard(unsigned char key, int x, int y) {
             exit(0);
             break;
         
-        // Toggle Help (H/h)
+        // Toggle Help Menu (H or h)
         case 'H':
         case 'h':
             showHelp = !showHelp;
+            glutPostRedisplay();
+            break;
+
+        // Toggle Stats Panel (I or i)
+        case 'I':
+        case 'i':
+            showStats = !showStats;
             glutPostRedisplay();
             break;
 
@@ -207,6 +256,11 @@ void keyboard(unsigned char key, int x, int y) {
         case '_':
             solutionPlayer.adjustSpeed(-0.1f);
             break;
+            
+        // Patterns (!, @, #)
+        case '!': applyPattern3x3(0); break; // Checkerboard
+        case '@': applyPattern3x3(1); break; // Superflip
+        case '#': applyPattern3x3(2); break; // Cube in Cube
         
         // Scramble
         case 'S':
@@ -231,6 +285,31 @@ void keyboard(unsigned char key, int x, int y) {
                     animation.queueMove(m);
                 }
                 std::cout << std::endl;
+            }
+            break;
+            
+        case 'A':
+        case 'a':
+            if (!animation.isAnimating() && animation.moveQueue.empty()) {
+                awaitingAlgInput = true;
+                std::cout << "\nEnter algorithm (e.g. \"R U R' U'\").\n"
+                          << "Note: Type in the terminal window, then press Enter.\n"
+                          << "> ";
+                std::string line;
+                std::getline(std::cin, line);
+
+                std::istringstream iss(line);
+                std::string token;
+                std::vector<Move> alg;
+                while (iss >> token) {
+                    alg.push_back(Move::parse(token));
+                }
+
+                std::cout << "Queuing " << alg.size() << " moves." << std::endl;
+                for (const auto& m : alg) {
+                    queueUserMove(m);
+                }
+                awaitingAlgInput = false;
             }
             break;
             

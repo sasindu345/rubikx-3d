@@ -49,8 +49,10 @@ public:
     // Best score recorded so far for a given cube size (0 if none)
     int getBestScore(int cubeSize) const;
 
-    // Most recent N history entries for a given cube size (newest first)
     std::vector<ScoreEntry> getHistory(int cubeSize, int maxCount = 5) const;
+
+    // Standard WCA average of N (drops best and worst time, averages the rest)
+    double getAverageOfN(int cubeSize, int n) const;
 
 private:
     bool active = false;
