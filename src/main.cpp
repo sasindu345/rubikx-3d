@@ -47,6 +47,7 @@ ScoreManager scoreManager;
 bool showHelp = true;
 bool practiceMode = false;
 bool awaitingAlgInput = false;
+bool showStats = false;
 
 // Move history tracker
 std::vector<Move> moveHistory;
@@ -137,6 +138,10 @@ void display() {
 
     // Render scoring panel (top-right): live timer/move counter or last result
     hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
+
+    if (showStats) {
+        hud.renderStatsPanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
+    }
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -164,10 +169,17 @@ void keyboard(unsigned char key, int x, int y) {
             exit(0);
             break;
         
-        // Toggle Help (H/h)
+        // Toggle Help Menu (H or h)
         case 'H':
         case 'h':
             showHelp = !showHelp;
+            glutPostRedisplay();
+            break;
+
+        // Toggle Stats Panel (I or i)
+        case 'I':
+        case 'i':
+            showStats = !showStats;
             glutPostRedisplay();
             break;
 

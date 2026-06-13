@@ -72,6 +72,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawControlLine(20, startY, "Space", "Pause/Resume timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "M / m", "Toggle practice mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "I / i", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "2", "Switch to 2x2 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "3", "Switch to 3x3 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "4", "Switch to 4x4 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
@@ -361,6 +362,53 @@ void HUD::renderScorePanel(int width, int height, const ScoreManager& scoreManag
             drawString(panelX + 12, panelY + 36, buf, GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
         }
     }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+
+    restoreProjection();
+}
+
+void HUD::renderStatsPanel(int width, int height, const ScoreManager& scoreManager, int cubeSize) {
+    setupOrthographicProjection(width, height);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int panelW = 200;
+    // Position the Stats Panel safely to the left of the top-right Score Panel
+    int panelX = width - panelW - 220; 
+    int panelY = 10;
+    int panelH = 95;
+
+    drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.85f);
+    drawBorder(panelX, panelY, panelW, panelH, 0.0f, 0.8f, 1.0f, 0.7f, 1.5f);
+
+    drawString(panelX + 12, panelY + 18, "SESSION STATS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+
+    char buf[128];
+    auto hist = scoreManager.getHistory(cubeSize, 9999);
+    snprintf(buf, sizeof(buf), "Total Solves: %d", (int)hist.size());
+    drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+    double ao5 = scoreManager.getAverageOfN(cubeSize, 5);
+    if (ao5 >= 0) {
+        snprintf(buf, sizeof(buf), "Ao5:  %05.2fs", ao5);
+    } else {
+        snprintf(buf, sizeof(buf), "Ao5:  ---");
+    }
+    drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+
+    double ao12 = scoreManager.getAverageOfN(cubeSize, 12);
+    if (ao12 >= 0) {
+        snprintf(buf, sizeof(buf), "Ao12: %05.2fs", ao12);
+    } else {
+        snprintf(buf, sizeof(buf), "Ao12: ---");
+    }
+    drawString(panelX + 12, panelY + 76, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
