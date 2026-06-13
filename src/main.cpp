@@ -241,6 +241,19 @@ void keyboard(unsigned char key, int x, int y) {
             practiceMode = !practiceMode;
             std::cout << "Practice mode: " << (practiceMode ? "ON (scores won't be saved)" : "OFF") << std::endl;
             break;
+            
+        // Reset Cube (C/c)
+        case 'C':
+        case 'c':
+            if (!animation.isAnimating() && animation.moveQueue.empty()) {
+                std::cout << "Resetting cube to solved state..." << std::endl;
+                activeCube.reset();
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                glutPostRedisplay();
+            }
+            break;
         
         // Switch Cube Size (2: 2x2, 3: 3x3, 4: 4x4, 5: 5x5, 6: 6x6, 7: 7x7)
         case '2':
