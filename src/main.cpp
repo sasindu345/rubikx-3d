@@ -45,6 +45,7 @@ bool practiceMode = false;
 
 // Move history tracker
 std::vector<Move> moveHistory;
+std::vector<Move> lastScramble;
 
 void queueUserMove(const Move& m) {
     // Clear any active solver playback when user manually rotates a face
@@ -219,6 +220,7 @@ void keyboard(unsigned char key, int x, int y) {
                 int n = activeCube.getSize();
                 int steps = (n == 2) ? 10 : (n == 3) ? 20 : (n == 4) ? 25 : (n == 5) ? 35 : (n == 6) ? 45 : 55;
                 std::vector<Move> moves = Scrambler::generateScramble(activeCube.getSize(), steps);
+                lastScramble = moves;
                 isScrambling = true;
                 animation.speed = 1800.0f; // Fast scramble animation
                 std::cout << "Scramble (" << moves.size() << " moves): ";
@@ -228,6 +230,26 @@ void keyboard(unsigned char key, int x, int y) {
                     animation.queueMove(m);
                 }
                 std::cout << std::endl;
+            }
+            break;
+            
+        case 'Y':
+        case 'y':
+            if (!animation.isAnimating() && animation.moveQueue.empty() && !lastScramble.empty()) {
+                std::cout << "Retrying same scramble..." << std::endl;
+                activeCube.reset();
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+
+                isScrambling = true;
+                animation.speed = 1800.0f;
+                for (const auto& m : lastScramble) {
+                    moveHistory.push_back(m);
+                    animation.queueMove(m);
+                }
+            } else if (lastScramble.empty()) {
+                std::cout << "No previous scramble to repeat. Press 'S' first." << std::endl;
             }
             break;
 
