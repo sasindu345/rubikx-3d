@@ -11,6 +11,7 @@
 #include "ui/SolutionPlayer.h"
 #include "ui/HUD.h"
 #include "algorithms/Algorithms.h"
+#include "utils/ScoreManager.h"
 
 
 #ifdef __APPLE__
@@ -38,6 +39,7 @@ bool alphaBlendingEnabled = false;
 // Solution player
 SolutionPlayer solutionPlayer;
 HUD hud;
+ScoreManager scoreManager;
 bool showHelp = true;
 
 // Move history tracker
@@ -46,7 +48,13 @@ std::vector<Move> moveHistory;
 void queueUserMove(const Move& m) {
     // Clear any active solver playback when user manually rotates a face
     solutionPlayer.setMoves({});
-    
+
+    // Count this as a solving move for scoring (only while a timed session
+    // is active and we're not in the middle of an auto-scramble)
+    if (!isScrambling) {
+        scoreManager.recordMove();
+    }
+
     // Maintain history (cancel adjacent inverses)
     if (!moveHistory.empty() && moveHistory.back() == m.getInverse()) {
         moveHistory.pop_back();
@@ -86,6 +94,9 @@ void display() {
     
     // Render 2D HUD Help Menu overlay
     hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled);
+
+    // Render scoring panel (top-right): live timer/move counter or last result
+    hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -202,8 +213,10 @@ void keyboard(unsigned char key, int x, int y) {
                 activeCube.reset();
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
 
-                int steps = (activeCube.getSize() == 2) ? 10 : (activeCube.getSize() == 3) ? 20 : 25;
+                int n = activeCube.getSize();
+                int steps = (n == 2) ? 10 : (n == 3) ? 20 : (n == 4) ? 25 : (n == 5) ? 35 : (n == 6) ? 45 : 55;
                 std::vector<Move> moves = Scrambler::generateScramble(activeCube.getSize(), steps);
                 isScrambling = true;
                 animation.speed = 1800.0f; // Fast scramble animation
@@ -217,12 +230,24 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
         
-        // Switch Cube Size (3: 3x3, 4: 4x4, 5: 5x5)
+        // Switch Cube Size (2: 2x2, 3: 3x3, 4: 4x4, 5: 5x5, 6: 6x6, 7: 7x7)
+        case '2':
+            if (activeCube.getSize() != 2) {
+                activeCube = CubeFactory::create(2);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                camera.radius = 8.0f; // Zoom in closer for the smaller 2x2 cube
+                std::cout << "Switched to 2x2 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
         case '3':
             if (activeCube.getSize() != 3) {
                 activeCube = CubeFactory::create(3);
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
                 camera.radius = 10.0f; // Reset zoom to default
                 std::cout << "Switched to 3x3 Rubik's Cube." << std::endl;
                 glutPostRedisplay();
@@ -233,6 +258,7 @@ void keyboard(unsigned char key, int x, int y) {
                 activeCube = CubeFactory::create(4);
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
                 camera.radius = 12.0f; // Zoom out slightly for larger cube
                 std::cout << "Switched to 4x4 Rubik's Cube." << std::endl;
                 glutPostRedisplay();
@@ -243,8 +269,31 @@ void keyboard(unsigned char key, int x, int y) {
                 activeCube = CubeFactory::create(5);
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
                 camera.radius = 14.0f; // Zoom out further for 5x5 cube
                 std::cout << "Switched to 5x5 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+        case '6':
+            if (activeCube.getSize() != 6) {
+                activeCube = CubeFactory::create(6);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                camera.radius = 16.0f; // Zoom out further for 6x6 cube
+                std::cout << "Switched to 6x6 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+        case '7':
+            if (activeCube.getSize() != 7) {
+                activeCube = CubeFactory::create(7);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                camera.radius = 18.0f; // Zoom out further for 7x7 cube
+                std::cout << "Switched to 7x7 Rubik's Cube." << std::endl;
                 glutPostRedisplay();
             }
             break;
@@ -397,6 +446,17 @@ void timer(int value) {
             std::cout << "Cube solved!" << std::endl;
             moveHistory.clear();
             solutionPlayer.setMoves({});
+
+            // Score the attempt if a timed session was running with at least
+            // one real move (avoids scoring a no-op "solve" right after reset)
+            if (scoreManager.isActive() && scoreManager.getMoveCount() > 0) {
+                ScoreEntry result = scoreManager.finishSession();
+                std::cout << "Score: " << result.score
+                          << " | Moves: " << result.moves
+                          << " | Time: " << result.timeSeconds << "s" << std::endl;
+            } else if (scoreManager.isActive()) {
+                scoreManager.cancelSession();
+            }
         }
     }
 
@@ -408,6 +468,9 @@ void timer(int value) {
         isScrambling = false;
         animation.speed = 450.0f; // Restore normal play speed
         std::cout << "Scramble complete." << std::endl;
+
+        // Start a fresh timed/scored session now that the puzzle is mixed up
+        scoreManager.startSession(activeCube.getSize());
     }
 
     glutPostRedisplay();
