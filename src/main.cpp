@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+#include <string>
 #include "cube/RubiksCube.h"
 #include "cube/CubeFactory.h"
 #include "cube/Move.h"
@@ -11,6 +13,9 @@
 #include "ui/SolutionPlayer.h"
 #include "ui/HUD.h"
 #include "algorithms/Algorithms.h"
+#include "utils/ScoreManager.h"
+#include "Colors.h"
+#include "solver/PatternLibrary.h"
 
 
 #ifdef __APPLE__
@@ -38,15 +43,26 @@ bool alphaBlendingEnabled = false;
 // Solution player
 SolutionPlayer solutionPlayer;
 HUD hud;
+ScoreManager scoreManager;
 bool showHelp = true;
+bool practiceMode = false;
+bool awaitingAlgInput = false;
+bool showStats = false;
 
 // Move history tracker
 std::vector<Move> moveHistory;
+std::vector<Move> lastScramble;
 
 void queueUserMove(const Move& m) {
     // Clear any active solver playback when user manually rotates a face
     solutionPlayer.setMoves({});
-    
+
+    // Count this as a solving move for scoring (only while a timed session
+    // is active and we're not in the middle of an auto-scramble)
+    if (!isScrambling && !scoreManager.isPaused()) {
+        scoreManager.recordMove();
+    }
+
     // Maintain history (cancel adjacent inverses)
     if (!moveHistory.empty() && moveHistory.back() == m.getInverse()) {
         moveHistory.pop_back();
@@ -55,6 +71,39 @@ void queueUserMove(const Move& m) {
     }
     
     animation.queueMove(m);
+}
+
+void applyPattern3x3(int index) {
+    if (activeCube.getSize() != 3) {
+        std::cout << "Patterns currently only defined for 3x3." << std::endl;
+        return;
+    }
+    if (!animation.isAnimating() && animation.moveQueue.empty()) {
+        activeCube.reset();
+        moveHistory.clear();
+        solutionPlayer.setMoves({});
+        scoreManager.cancelSession();
+
+        auto patterns = PatternLibrary::getPatterns3x3();
+        if (index < 0 || index >= patterns.size()) return;
+        const auto& pattern = patterns[index];
+        std::cout << "Applying pattern: " << pattern.name << std::endl;
+        for (const auto& tok : pattern.algorithm) {
+            std::string parseToken = tok;
+            bool isDouble = false;
+            if (!parseToken.empty() && parseToken.back() == '2') {
+                isDouble = true;
+                parseToken.pop_back(); // Remove '2'
+            }
+            Move m = Move::parse(parseToken);
+            moveHistory.push_back(m);
+            animation.queueMove(m);
+            if (isDouble) {
+                moveHistory.push_back(m);
+                animation.queueMove(m);
+            }
+        }
+    }
 }
 
 // Mouse tracking state
@@ -86,6 +135,13 @@ void display() {
     
     // Render 2D HUD Help Menu overlay
     hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode));
+
+    // Render scoring panel (top-right): live timer/move counter or last result
+    hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
+
+    if (showStats) {
+        hud.renderStatsPanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
+    }
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -113,10 +169,17 @@ void keyboard(unsigned char key, int x, int y) {
             exit(0);
             break;
         
-        // Toggle Help (H/h)
+        // Toggle Help Menu (H or h)
         case 'H':
         case 'h':
             showHelp = !showHelp;
+            glutPostRedisplay();
+            break;
+
+        // Toggle Stats Panel (I or i)
+        case 'I':
+        case 'i':
+            showStats = !showStats;
             glutPostRedisplay();
             break;
 
@@ -209,6 +272,11 @@ void keyboard(unsigned char key, int x, int y) {
         case '_':
             solutionPlayer.adjustSpeed(-0.1f);
             break;
+            
+        // Patterns (!, @, #)
+        case '!': applyPattern3x3(0); break; // Checkerboard
+        case '@': applyPattern3x3(1); break; // Superflip
+        case '#': applyPattern3x3(2); break; // Cube in Cube
         
         // Scramble
         case 'S':
@@ -218,9 +286,12 @@ void keyboard(unsigned char key, int x, int y) {
                 activeCube.reset();
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
 
-                int steps = (activeCube.getSize() == 2) ? 10 : (activeCube.getSize() == 3) ? 20 : 25;
+                int n = activeCube.getSize();
+                int steps = (n == 2) ? 10 : (n == 3) ? 20 : (n == 4) ? 25 : (n == 5) ? 35 : (n == 6) ? 45 : 55;
                 std::vector<Move> moves = Scrambler::generateScramble(activeCube.getSize(), steps);
+                lastScramble = moves;
                 isScrambling = true;
                 animation.speed = 1800.0f; // Fast scramble animation
                 std::cout << "Scramble (" << moves.size() << " moves): ";
@@ -232,13 +303,104 @@ void keyboard(unsigned char key, int x, int y) {
                 std::cout << std::endl;
             }
             break;
+            
+        case 'A':
+        case 'a':
+            if (!animation.isAnimating() && animation.moveQueue.empty()) {
+                awaitingAlgInput = true;
+                std::cout << "\nEnter algorithm (e.g. \"R U R' U'\").\n"
+                          << "Note: Type in the terminal window, then press Enter.\n"
+                          << "> ";
+                std::string line;
+                std::getline(std::cin, line);
+
+                std::istringstream iss(line);
+                std::string token;
+                std::vector<Move> alg;
+                while (iss >> token) {
+                    alg.push_back(Move::parse(token));
+                }
+
+                std::cout << "Queuing " << alg.size() << " moves." << std::endl;
+                for (const auto& m : alg) {
+                    queueUserMove(m);
+                }
+                awaitingAlgInput = false;
+            }
+            break;
+            
+        case 'Y':
+        case 'y':
+            if (!animation.isAnimating() && animation.moveQueue.empty() && !lastScramble.empty()) {
+                std::cout << "Retrying same scramble..." << std::endl;
+                activeCube.reset();
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+
+                isScrambling = true;
+                animation.speed = 1800.0f;
+                for (const auto& m : lastScramble) {
+                    moveHistory.push_back(m);
+                    animation.queueMove(m);
+                }
+            } else if (lastScramble.empty()) {
+                std::cout << "No previous scramble to repeat. Press 'S' first." << std::endl;
+            }
+            break;
+
+        case ' ':
+            scoreManager.togglePause();
+            std::cout << (scoreManager.isPaused() ? "Timer paused." : "Timer resumed.") << std::endl;
+            break;
+            
+        case 'M':
+        case 'm':
+            practiceMode = !practiceMode;
+            std::cout << "Practice mode: " << (practiceMode ? "ON (scores won't be saved)" : "OFF") << std::endl;
+            break;
+            
+        // Reset Cube (X/x)
+        case 'X':
+        case 'x':
+            if (!animation.isAnimating() && animation.moveQueue.empty()) {
+                std::cout << "Resetting cube to solved state..." << std::endl;
+                activeCube.reset();
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                glutPostRedisplay();
+            }
+            break;
+            
+        // Cycle Color Schemes (C/c)
+        case 'C':
+        case 'c': {
+            int next = (((int)Colors::getScheme()) + 1) % (int)Colors::Scheme::COUNT;
+            Colors::setScheme((Colors::Scheme)next);
+            std::cout << "Color scheme changed." << std::endl;
+            glutPostRedisplay();
+            break;
+        }
         
-        // Switch Cube Size (3: 3x3, 4: 4x4, 5: 5x5)
+        // Switch Cube Size (2: 2x2, 3: 3x3, 4: 4x4, 5: 5x5, 6: 6x6, 7: 7x7)
+        case '2':
+            if (activeCube.getSize() != 2) {
+                activeCube = CubeFactory::create(2);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                camera.radius = 8.0f; // Zoom in closer for the smaller 2x2 cube
+                std::cout << "Switched to 2x2 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
         case '3':
             if (activeCube.getSize() != 3) {
                 activeCube = CubeFactory::create(3);
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
                 camera.radius = 10.0f; // Reset zoom to default
                 std::cout << "Switched to 3x3 Rubik's Cube." << std::endl;
                 glutPostRedisplay();
@@ -249,6 +411,7 @@ void keyboard(unsigned char key, int x, int y) {
                 activeCube = CubeFactory::create(4);
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
                 camera.radius = 12.0f; // Zoom out slightly for larger cube
                 std::cout << "Switched to 4x4 Rubik's Cube." << std::endl;
                 glutPostRedisplay();
@@ -259,8 +422,31 @@ void keyboard(unsigned char key, int x, int y) {
                 activeCube = CubeFactory::create(5);
                 moveHistory.clear();
                 solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
                 camera.radius = 14.0f; // Zoom out further for 5x5 cube
                 std::cout << "Switched to 5x5 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+        case '6':
+            if (activeCube.getSize() != 6) {
+                activeCube = CubeFactory::create(6);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                camera.radius = 16.0f; // Zoom out further for 6x6 cube
+                std::cout << "Switched to 6x6 Rubik's Cube." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+        case '7':
+            if (activeCube.getSize() != 7) {
+                activeCube = CubeFactory::create(7);
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+                camera.radius = 18.0f; // Zoom out further for 7x7 cube
+                std::cout << "Switched to 7x7 Rubik's Cube." << std::endl;
                 glutPostRedisplay();
             }
             break;
@@ -413,6 +599,22 @@ void timer(int value) {
             std::cout << "Cube solved!" << std::endl;
             moveHistory.clear();
             solutionPlayer.setMoves({});
+
+            // Score the attempt if a timed session was running with at least
+            // one real move (avoids scoring a no-op "solve" right after reset)
+            if (scoreManager.isActive() && scoreManager.getMoveCount() > 0) {
+                if (practiceMode) {
+                    scoreManager.cancelSession(); // discard without saving
+                    std::cout << "Practice mode active - session discarded." << std::endl;
+                } else {
+                    ScoreEntry result = scoreManager.finishSession();
+                    std::cout << "Score: " << result.score
+                              << " | Moves: " << result.moves
+                              << " | Time: " << result.timeSeconds << "s" << std::endl;
+                }
+            } else if (scoreManager.isActive()) {
+                scoreManager.cancelSession();
+            }
         }
     }
 
@@ -424,6 +626,9 @@ void timer(int value) {
         isScrambling = false;
         animation.speed = 450.0f; // Restore normal play speed
         std::cout << "Scramble complete." << std::endl;
+
+        // Start a fresh timed/scored session now that the puzzle is mixed up
+        scoreManager.startSession(activeCube.getSize());
     }
 
     glutPostRedisplay();

@@ -37,16 +37,15 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
     // Disable depth testing and lighting for 2D rendering
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    int leftPanelW = 310;
+    int rightPanelW = 310;
 
     // 1. Draw left help panel if visible
     if (showHelp) {
-        int panelW = 310;
         // Draw main dark panel
-        drawPanel(0, 0, panelW, height, 0.08f, 0.08f, 0.1f, 0.85f);
+        drawPanel(0, 0, leftPanelW, height, 0.08f, 0.08f, 0.1f, 0.85f);
         // Draw glowing right border
-        drawPanel(panelW - 2, 0, 2, height, 0.2f, 0.4f, 0.6f, 0.6f);
+        drawPanel(leftPanelW - 2, 0, 2, height, 0.2f, 0.4f, 0.6f, 0.6f);
 
         int startY = 35;
         int lineSpacing = 20;
@@ -62,43 +61,68 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawPanel(20, startY + 4, 120, 1, 1.0f, 0.75f, 0.2f, 0.5f);
         startY += 20;
         drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Shift + 1", "Pattern: Checkerboard", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Shift + 2", "Pattern: Superflip", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Shift + 3", "Pattern: Cube in Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Y / y", "Retry previous scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "A / a", "Input algorithm notation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "C / c", "Cycle color scheme", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "X / x", "Reset cube to solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Space", "Pause/Resume timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "M / m", "Toggle practice mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "I / i", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "2", "Switch to 2x2 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "3", "Switch to 3x3 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "4", "Switch to 4x4 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "5", "Switch to 5x5 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "6", "Switch to 6x6 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "7", "Switch to 7x7 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "T / t", "Toggle Glass Cube (Alpha Blend)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "W / w", "Cycle Render Mode (Solid/Wire/Tex)", GLUT_BITMAP_8_BY_13); startY += 35;
 
+        // --- SECOND HELP PANEL (RIGHT SIDE) ---
+        int rightPanelX = width - rightPanelW;
+        int rightPanelY = 170; // Positioned safely below the score panel
+        int rightPanelH = height - rightPanelY;
+
+        // Draw main dark panel
+        drawPanel(rightPanelX, rightPanelY, rightPanelW, rightPanelH, 0.08f, 0.08f, 0.1f, 0.85f);
+        // Draw glowing left border
+        drawPanel(rightPanelX, rightPanelY, 2, rightPanelH, 0.2f, 0.4f, 0.6f, 0.6f);
+
+        int rStartY = rightPanelY + 20;
+
         // --- SOLUTION PLAYBACK ---
-        drawString(20, startY, "PLAYBACK CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(20, startY + 4, 135, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        startY += 20;
-        drawControlLine(20, startY, "P / p", "Play / Pause autoplay", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, ", / <", "Step backward (Undo move)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, ". / >", "Step forward (Play move)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "- / +", "Adjust playback speed", GLUT_BITMAP_8_BY_13); startY += 35;
+        drawString(rightPanelX + 20, rStartY, "PLAYBACK CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+        drawPanel(rightPanelX + 20, rStartY + 4, 135, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+        rStartY += 20;
+        drawControlLine(rightPanelX + 20, rStartY, "P / p", "Play / Pause autoplay", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, ", / <", "Step backward (Undo move)", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, ". / >", "Step forward (Play move)", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, "- / +", "Adjust playback speed", GLUT_BITMAP_8_BY_13); rStartY += 35;
 
         // --- CAMERA CONTROLS ---
-        drawString(20, startY, "CAMERA VIEW", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(20, startY + 4, 90, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        startY += 20;
-        drawString(20, startY, "Left Click + Drag: Orbit view", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); startY += lineSpacing;
-        drawString(20, startY, "Right Click + Drag: Zoom view", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); startY += lineSpacing;
-        drawString(20, startY, "Scroll Wheel: Zoom in/out", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); startY += lineSpacing;
-        drawString(20, startY, "Arrow Keys: Orbit view step", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); startY += 35;
+        drawString(rightPanelX + 20, rStartY, "CAMERA VIEW", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+        drawPanel(rightPanelX + 20, rStartY + 4, 90, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+        rStartY += 20;
+        drawString(rightPanelX + 20, rStartY, "Left Click + Drag: Orbit view", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += lineSpacing;
+        drawString(rightPanelX + 20, rStartY, "Right Click + Drag: Zoom view", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += lineSpacing;
+        drawString(rightPanelX + 20, rStartY, "Scroll Wheel: Zoom in/out", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += lineSpacing;
+        drawString(rightPanelX + 20, rStartY, "Arrow Keys: Orbit view step", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += 35;
 
         // --- MANUAL ROTATIONS ---
-        drawString(20, startY, "MANUAL TURNS (CW / CCW)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(20, startY + 4, 160, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        startY += 20;
-        drawControlLine(20, startY, "R / r", "Right face rotation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "L / l", "Left face rotation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "U / u", "Up (Top) face rotation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "D / d", "Down (Bottom) rotation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "F / f", "Front face rotation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "B / b", "Back face rotation", GLUT_BITMAP_8_BY_13);
+        drawString(rightPanelX + 20, rStartY, "MANUAL TURNS (CW / CCW)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+        drawPanel(rightPanelX + 20, rStartY + 4, 160, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+        rStartY += 20;
+        drawControlLine(rightPanelX + 20, rStartY, "R / r", "Right face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, "L / l", "Left face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, "U / u", "Up (Top) face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, "D / d", "Down (Bottom) rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, "F / f", "Front face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
+        drawControlLine(rightPanelX + 20, rStartY, "B / b", "Back face rotation", GLUT_BITMAP_8_BY_13);
     } else {
         // Simple minimized HUD banner at top-left
         drawPanel(10, 10, 190, 30, 0.08f, 0.08f, 0.1f, 0.75f);
@@ -152,8 +176,8 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
 
     // 2. Playback Dashboard (Bottom Center)
     if (player.getMoveCount() > 0) {
-        int startX = showHelp ? 330 : 30;
-        int endX = width - 30;
+        int startX = showHelp ? leftPanelW + 20 : 30;
+        int endX = showHelp ? width - rightPanelW - 20 : width - 30;
         int dashW = 680;
         
         // Center the dashboard in the available space if space is larger than dashW
@@ -275,5 +299,146 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
     
+    restoreProjection();
+}
+
+void HUD::renderScorePanel(int width, int height, const ScoreManager& scoreManager, int cubeSize, bool practiceMode) {
+    setupOrthographicProjection(width, height);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int panelW = 200;
+    int panelX = width - panelW - 10;
+    // Sits just below the Glass Cube badge (which occupies y = 10..38)
+    int panelY = 48;
+
+    char buf[64];
+
+    if (scoreManager.isActive()) {
+        // --- Live session: move counter, stopwatch, live score estimate ---
+        int panelH = 92;
+        drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.85f);
+        drawBorder(panelX, panelY, panelW, panelH, 0.0f, 0.8f, 1.0f, 0.6f, 1.0f);
+
+        drawString(panelX + 12, panelY + 18, "SOLVE IN PROGRESS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+        
+        if (practiceMode) {
+            drawPanel(panelX + 140, panelY + 6, 54, 14, 0.6f, 0.2f, 0.6f, 0.8f);
+            drawString(panelX + 143, panelY + 16, "PRACTICE", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.8f, 1.0f);
+        }
+
+        if (scoreManager.isPaused()) {
+            drawString(panelX + 12, panelY + 40, "Time:  [PAUSED]", GLUT_BITMAP_8_BY_13, 1.0f, 0.55f, 0.0f);
+        } else {
+            double t = scoreManager.getElapsedSeconds();
+            int mins = (int)(t / 60.0);
+            double secs = t - mins * 60.0;
+            snprintf(buf, sizeof(buf), "Time:  %02d:%05.2f", mins, secs);
+            drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+        }
+
+        snprintf(buf, sizeof(buf), "Moves: %d", scoreManager.getMoveCount());
+        drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+        snprintf(buf, sizeof(buf), "Score: %d", scoreManager.getLiveScore());
+        drawString(panelX + 12, panelY + 76, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+    } else if (scoreManager.hasLastResult()) {
+        // --- Just finished: show result + personal best for this cube size ---
+        const ScoreEntry& last = scoreManager.getLastResult();
+        int best = scoreManager.getBestScore(cubeSize);
+        bool isNewBest = (last.score >= best) && last.cubeSize == cubeSize;
+
+        int panelH = 110;
+        drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.85f);
+        drawBorder(panelX, panelY, panelW, panelH,
+                   isNewBest ? 0.0f : 0.0f, isNewBest ? 1.0f : 0.8f, isNewBest ? 0.4f : 1.0f, 0.7f, 1.5f);
+
+        drawString(panelX + 12, panelY + 18, "SOLVE COMPLETE!", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+
+        int mins = (int)(last.timeSeconds / 60.0);
+        double secs = last.timeSeconds - mins * 60.0;
+        snprintf(buf, sizeof(buf), "Time:  %02d:%05.2f", mins, secs);
+        drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+        snprintf(buf, sizeof(buf), "Moves: %d", last.moves);
+        drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+        snprintf(buf, sizeof(buf), "Score: %d", last.score);
+        drawString(panelX + 12, panelY + 76, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+
+        if (isNewBest) {
+            drawString(panelX + 12, panelY + 96, "NEW BEST for this size!", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.85f, 0.0f);
+        } else {
+            snprintf(buf, sizeof(buf), "Best (this size): %d", best);
+            drawString(panelX + 12, panelY + 96, buf, GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+        }
+    } else {
+        // --- Idle / no session yet ---
+        int panelH = 44;
+        drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.65f);
+        drawBorder(panelX, panelY, panelW, panelH, 0.2f, 0.2f, 0.25f, 0.5f, 1.0f);
+        drawString(panelX + 12, panelY + 18, "Press 'S' to scramble", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+
+        int best = scoreManager.getBestScore(cubeSize);
+        if (best > 0) {
+            snprintf(buf, sizeof(buf), "Best (this size): %d", best);
+            drawString(panelX + 12, panelY + 36, buf, GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+        }
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+
+    restoreProjection();
+}
+
+void HUD::renderStatsPanel(int width, int height, const ScoreManager& scoreManager, int cubeSize) {
+    setupOrthographicProjection(width, height);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int panelW = 200;
+    // Position the Stats Panel safely to the left of the top-right Score Panel
+    int panelX = width - panelW - 220; 
+    int panelY = 10;
+    int panelH = 95;
+
+    drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.85f);
+    drawBorder(panelX, panelY, panelW, panelH, 0.0f, 0.8f, 1.0f, 0.7f, 1.5f);
+
+    drawString(panelX + 12, panelY + 18, "SESSION STATS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+
+    char buf[128];
+    auto hist = scoreManager.getHistory(cubeSize, 9999);
+    snprintf(buf, sizeof(buf), "Total Solves: %d", (int)hist.size());
+    drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+    double ao5 = scoreManager.getAverageOfN(cubeSize, 5);
+    if (ao5 >= 0) {
+        snprintf(buf, sizeof(buf), "Ao5:  %05.2fs", ao5);
+    } else {
+        snprintf(buf, sizeof(buf), "Ao5:  ---");
+    }
+    drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+
+    double ao12 = scoreManager.getAverageOfN(cubeSize, 12);
+    if (ao12 >= 0) {
+        snprintf(buf, sizeof(buf), "Ao12: %05.2fs", ao12);
+    } else {
+        snprintf(buf, sizeof(buf), "Ao12: ---");
+    }
+    drawString(panelX + 12, panelY + 76, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+
     restoreProjection();
 }
