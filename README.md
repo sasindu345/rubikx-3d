@@ -1,19 +1,20 @@
 # RubikX-3D: Interactive 3D Rubik's Cube Learning & Solving System
 
-RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learning, visualization, and solving application written in **C++17**, utilizing **OpenGL** and **GLUT/FreeGLUT**. The system is designed to provide a rich visual workspace for learning Rubik's Cube solving techniques while applying fundamental computer graphics concepts like 3D transformations, viewing projection, visible surface detection, and animation.
+RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learning, visualization, and solving application written in **C++17**, utilizing **OpenGL** and **GLUT/FreeGLUT**. The system is designed to provide a rich visual workspace for learning Rubik's Cube solving techniques while applying fundamental computer graphics concepts like 3D transformations, viewing projection, visible surface detection, alpha compositing, and animation.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Multiple Cube Types:** Switch dynamically between **2x2**, **3x3**, and **4x4** Rubik's Cubes.
-2. **Interactive 3D Viewport:** Free orbit-camera navigation, panning, zooming, and projection mapping.
-3. **Smooth Face Rotation Animations:** Realistic rotation speeds and ease-in/out transitions.
-4. **Random Solvable Scrambling:** Auto-scrambling with optimal move counts to generate valid, solvable puzzles.
-5. **Step-by-Step Interactive Solver:** Automatic solvers with play, pause, slow down, speed up, next-step, and previous-step controls.
-6. **2D Flat Pattern Editor:** A layout editor to customize your own color schemes and designs.
-7. **Performance Scoring & HUD:** Real-time statistics overlay (move counter, active stopwatch, score multiplier, state history tracker).
-8. **Save Solving History:** Persistent scoreboards saved locally to compare speed and moves across attempts.
+1. **Interactive Setup Screen (Welcome Screen):** An elegant full-screen onboarding configuration UI shown on launch. Users can customize puzzle settings like cube dimension, rendering style, color scheme, and gameplay preferences (Glass Cube, Practice Mode, Auto-Scramble) using keyboard navigation or mouse clicks. This menu can be re-opened anytime with the `O` key.
+2. **Multiple Cube Dimensions:** Switch dynamically between cube sizes ranging from **2x2** up to **7x7**. Camera zoom distances adapt automatically to accommodate the size of the puzzle.
+3. **Reorganized HUD Layout:** A single, clean HUD panel on the left of the screen, categorized logically (Cube Moves, Game Actions, Settings & View) to minimize visual clutter. Prefabs and active modes (e.g., Glass Cube, Render Mode, and Solve Time/History stats) are highlighted using overlay badges and scoreboards with fixed overlap layouts.
+4. **Advanced rendering Styles:** Solid, Wireframe, and Textured rendering modes toggled dynamically using the `W` key.
+5. **Transparency & Alpha Blending (Glass Cube):** Semi-transparent rendering mode using OpenGL alpha blending (`GL_BLEND`) and depth sorting (Painter's algorithm) to reveal internal structure.
+6. **Multiple Color Scheme Palettes:** Dynamic cycle through Classic, Pastel, and High Contrast color schemes for sticker faces using the `C` key.
+7. **Random Solvable Scrambling:** Scramble generation with custom move counts scaled based on the cube size (from 10 moves for 2x2 up to 55 moves for 7x7) to ensure valid, solvable configurations.
+8. **Step-by-Step Interactive Solver:** Play, pause, slow down, speed up, advance a step, or reverse a step through auto-solved solutions. Includes keyboard shortcuts for checkerboard, superflip, and cube-in-cube patterns on 3x3 cubes.
+9. **Interactive 3D Viewport:** Free orbit-camera navigation with click-and-drag mouse controls, panning, and scroll-wheel zoom.
 
 ---
 
@@ -22,7 +23,7 @@ RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learni
 * **Language:** C++17
 * **Graphics API:** OpenGL 2.1 (fixed-function pipeline)
 * **Windowing & Inputs:** GLUT / FreeGLUT
-* **Build System:** CMake (fallback support for standard Makefiles)
+* **Build System:** Makefile (macOS & Windows/Linux compatibility) and CMake support
 
 ---
 
@@ -31,34 +32,71 @@ RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learni
 ```
 rubikx-3d/
 ├── CMakeLists.txt                 # CMake build configuration
-├── Makefile                       # Fallback Makefile
+├── Makefile                       # Main Makefile for building on macOS/Linux
 ├── README.md                      # Project documentation (this file)
 │
-├── include/                       # Header Files
-│   ├── core/                      # Core Cube Logic (Cubie, RubiksCube, Move)
-│   ├── graphics/                  # Rendering, Camera, Lighting, Animation
-│   ├── solver/                    # Solver algorithms (2x2, 3x3, 4x4)
-│   ├── ui/                        # HUD, Menus, Pattern Editor
-│   └── utils/                     # Timer, Math, History, Scoring
+├── src/                           # Source & Header Files
+│   ├── main.cpp                   # Application entrypoint & GLUT callbacks (keyboard, mouse, display)
+│   │
+│   ├── Animation.cpp/.h           # Handles interpolating 3D rotations for smooth face turns
+│   ├── Camera.cpp/.h              # Orbiting perspective camera matrix configuration
+│   ├── Colors.cpp/.h              # Handles sticker color scheme palettes (Classic, Pastel, High Contrast)
+│   ├── Lighting.cpp/.h            # Configures diffuse and specular lights for realistic face reflection
+│   ├── Renderer.cpp/.h            # Renders 3D cubie shapes, textured face stickers, and wireframe outlines
+│   │
+│   ├── algorithms/                # Traditional Computer Graphics Algorithms
+│   │   ├── Algorithms.h           # Unified algorithms header
+│   │   ├── Animation.cpp/.h       # Smooth frame interpolation
+│   │   ├── Clipping.cpp/.h        # Polygon and line clipping
+│   │   ├── Filling.cpp/.h         # Polygon raster filling routines
+│   │   ├── Rasterization.cpp/.h   # 2D raster fonts & line drawing helpers
+│   │   ├── Transformations.cpp/.h # Local/world coordinate matrix transformations
+│   │   ├── Viewing.cpp/.h         # Projections & viewport transforms
+│   │   └── Visibility.cpp/.h      # Depth buffering & backface culling
+│   │
+│   ├── cube/                      # Rubik's Cube Internal Logic
+│   │   ├── CubeFactory.cpp/.h     # Factory to instantiate RubiksCube objects dynamically by size
+│   │   ├── Cubie.cpp/.h           # Represents individual sub-cube pieces, positions, and active colors
+│   │   ├── Move.cpp/.h            # Represents face rotations (Face, Direction, Layer indices)
+│   │   └── RubiksCube.cpp/.h      # Encapsulates Rubik's Cube state and sticker transformations
+│   │
+│   ├── solver/                    # Automatic Solvers & Scrambling
+│   │   ├── PatternLibrary.cpp/.h  # Predefined configurations (Checkerboard, Superflip, etc.)
+│   │   ├── ReverseSolver.cpp/.h   # Backwards-step solver that reconstructs movements to solve the puzzle
+│   │   └── Scrambler.cpp/.h       # Generates random sequence of moves to scramble the cube
+│   │
+│   ├── ui/                        # User Interface Overlays
+│   │   ├── HUD.cpp/.h             # Left menu text panel, scoreboard statistics, and status badges
+│   │   ├── SolutionPlayer.cpp/.h  # Handles playing/stepping through solver animations with variable speeds
+│   │   └── WelcomeScreen.cpp/.h   # Renders the centered full-screen modal setup & config form
+│   │
+│   └── utils/                     # General Utilities
+│       ├── MathUtils.cpp/.h       # Matrices & quaternion rotations mathematical operations
+│       └── ScoreManager.cpp/.h    # Solved state check, time tracking, scores, and session logs
 │
-├── src/                           # Source Files
-│   ├── main.cpp                   # Application entrypoint & GLUT loop
-│   ├── core/                      # Cubie, RubiksCube, Move logic
-│   ├── graphics/                  # Renderer, Camera, Lighting, Animation
-│   ├── solver/                    # Ortega (2x2), Beginner (3x3), Reduction (4x4)
-│   ├── ui/                        # HUD overlays & editor nets
-│   └── utils/                     # Timer, History, Scoring, Math helpers
-│
-└── data/                          # Persistent storage (logs, scores)
+└── docs/                          # Developer Guides and Guidelines
+    ├── DEVELOPMENT_GUIDELINE.md   # Guidelines for building, writing code, and style conventions
+    └── improvements.md            # Planned UI and feature improvements logs
 ```
 
 ---
 
 ## 🚀 How to Build and Run (macOS)
 
-### Option A: Using CMake (Recommended)
+### Option A: Using standard `make` (Recommended)
 
-1. Make sure you have CMake installed:
+1. Simply run `make` inside the root directory:
+   ```bash
+   make
+   ```
+2. Run the executable:
+   ```bash
+   ./RubikX3D
+   ```
+
+### Option B: Using CMake
+
+1. Install dependencies:
    ```bash
    brew install cmake freeglut
    ```
@@ -73,54 +111,82 @@ rubikx-3d/
    ./RubikX3D
    ```
 
-### Option B: Using standard `make` (Fallback)
-
-1. Simply run:
-   ```bash
-   make
-   ```
-2. Run the executable:
-   ```bash
-   ./RubikX3D
-   ```
-
 ---
 
 ## 🎮 Keyboard & Mouse Controls
 
-### Keyboard Controls
+### Welcome / Setup Screen
 
-| Key | Action |
+| Control | Action |
 |:---:|---|
-| `R` / `r` | Rotate **Right** face (Clockwise / Counter-Clockwise) |
-| `L` / `l` | Rotate **Left** face (Clockwise / Counter-Clockwise) |
-| `U` / `u` | Rotate **Up/Top** face (Clockwise / Counter-Clockwise) |
-| `D` / `d` | Rotate **Down/Bottom** face (Clockwise / Counter-Clockwise) |
-| `F` / `f` | Rotate **Front** face (Clockwise / Counter-Clockwise) |
-| `B` / `b` | Rotate **Back** face (Clockwise / Counter-Clockwise) |
-| `S` / `s` | Scramble the cube randomly |
-| `Z` / `z` | Auto-solve the current cube state |
-| `P` / `p` | Play/Pause automatic solution steps |
-| `>` / `<` | Advance / Go back one step in solver mode |
-| `+` / `-` | Speed up / Slow down rotation animations |
-| `1` / `2` / `3` | Switch Cube Size (2x2, 3x3, 4x4) |
-| `E` / `e` | Enter / Exit Custom Flat Pattern Editor mode |
-| `H` / `h` | Toggle history overlay scoreboard panel |
-| `Esc` | Reset current mode / Exit application |
+| `UP` / `DOWN` / `LEFT` / `RIGHT` | Navigate options inside the Welcome screen grid |
+| `SPACE` | Select / Toggle active option (Size, Style, Scheme, Preferences) |
+| `ENTER` | Start game with selected configuration |
+| `Mouse Click` | Directly click cards or buttons to select preferences or start |
+| `Esc` | Close Welcome Screen (if active) |
+
+### Interactive Game Workspace (Main Screen)
+
+The main keyboard controls are organized by category and displayed in the left HUD overlay:
+
+#### 1. Cube Moves (CW / CCW)
+
+Rotate the outer layers of the active face. Use **Uppercase** letters for Clockwise rotation, and **Lowercase** letters for Counter-Clockwise rotation:
+
+* **Right Face:** `R` (CW) / `r` (CCW)
+* **Left Face:** `L` (CW) / `l` (CCW)
+* **Up Face:** `U` (CW) / `u` (CCW)
+* **Down Face:** `D` (CW) / `d` (CCW)
+* **Front Face:** `F` (CW) / `f` (CCW)
+* **Back Face:** `B` (CW) / `b` (CCW)
+
+#### 2. Game Actions
+
+* `S` / `s`: Scramble the cube randomly (move sequence scaled based on dimension)
+* `Z` / `z`: Auto-solve the current cube state (populates solution steps)
+* `X` / `x`: Reset cube instantly to solved state
+* `Y` / `y`: Retry the last generated scramble sequence
+* `A` / `a`: Input custom algorithm string directly in the terminal window (e.g. `R U R' U'`)
+* `!` / `@` / `#`: Apply standard patterns to 3x3 cube (Checkerboard, Superflip, Cube-in-Cube)
+
+#### 3. Settings & View
+
+* `O` / `o` / `0`: Open Setup / Welcome Menu screen
+* `2` – `7`: Switch Cube Size dynamically (from 2x2x2 up to 7x7x7)
+* `C` / `c`: Cycle sticker color schemes (Classic, Pastel, High Contrast)
+* `T` / `t`: Toggle Glass Mode (semi-transparent acrylic cubies)
+* `W` / `w`: Toggle Render Style (Solid rendering, Wireframe rendering, Textured stickers)
+* `M` / `m`: Toggle Practice Mode (timer continues, but score updates/history won't save)
+* `Space`: Pause / Resume timer
+* `I` / `i`: Toggle Session Stats Panel display (top-right overlay)
+* `H` / `h`: Toggle HUD help overlay visibility (left panel)
+* `Esc`: Exit application
+
+#### 4. Solution Player Controls
+
+When a solution is active (computed by pressing `Z`):
+
+* `P` / `p`: Play / Pause auto-playback of solution moves
+* `.` / `>`: Step forward one move manually
+* `,` / `<`: Step backward one move manually
+* `+` / `=`: Speed up solution playback speed
+* `-` / `_`: Slow down solution playback speed
 
 ### Mouse Interaction
 
 * **Orbit Camera:** Click and drag using the **Left Mouse Button**.
 * **Zoom View:** Scroll using the **Mouse Wheel** to zoom in or out.
-* **Context Options:** Click the **Right Mouse Button** to open a quick actions menu.
+* **Select Options:** Click options on the welcome setup grid directly.
 
 ---
 
 ## 📐 Computer Graphics Concepts Demonstrated
 
-This system implements key graphics concepts directly using low-level OpenGL/GLUT techniques:
+This system implements key computer graphics concepts directly using OpenGL fixed-function pipeline techniques:
+
 * **3D Transformations:** Local and global matrices are computed dynamically to rotate subsets of Cubies around specific axes (`glMultMatrixf`, `glRotatef`, `glTranslatef`).
-* **3D Viewing & Projections:** Features a perspective camera (`gluLookAt` and `gluPerspective`) combined with orthographic overlays (`glOrtho`) for rendering the HUD.
+* **3D Viewing & Projections:** Features a perspective camera (`gluLookAt` and `gluPerspective`) combined with orthographic overlays (`glOrtho`) for rendering the HUD and menus.
 * **Visible Surface Detection:** Implements back-face culling (`glEnable(GL_CULL_FACE)`) and Z-buffering depth tests (`glEnable(GL_DEPTH_TEST)`) to maximize performance.
+* **Alpha Compositing:** Implements Glass Cube mode using `glEnable(GL_BLEND)` with source/destination blending factors (`glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)`).
 * **Clipping:** Uses near and far clipping planes defined in the viewing volume to clip objects outside the viewport boundaries.
 * **Shading & Lighting:** Implements two-point specular and diffuse lighting models for realistic face reflections.

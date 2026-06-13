@@ -16,7 +16,9 @@
 #include "utils/ScoreManager.h"
 #include "Colors.h"
 #include "solver/PatternLibrary.h"
+#include "ui/WelcomeScreen.h"
 
+WelcomeScreen welcomeScreen;
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -117,30 +119,37 @@ void display() {
     // Clear color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // Reset modelview transformation
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    
-    // Position/orient the camera
-    camera.apply();
-    
-    // Position lighting in scene space (after camera transformation so lights are stationary in world space)
-    Lighting::apply();
+    if (welcomeScreen.isActive()) {
+        // Welcome screen: render ONLY the 2D setup overlay on a clean dark background
+        // (no 3D cube, no camera, no lighting)
+        welcomeScreen.render(windowWidth, windowHeight);
+    } else {
+        // Normal gameplay rendering
+        // Reset modelview transformation
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        
+        // Position/orient the camera
+        camera.apply();
+        
+        // Position lighting in scene space
+        Lighting::apply();
 
-    // Sync alpha blending state with renderer before drawing
-    renderer.alphaBlending = alphaBlendingEnabled;
-    
-    // Render the Rubik's Cube with active animations
-    renderer.renderCube(activeCube, animation);
-    
-    // Render 2D HUD Help Menu overlay
-    hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode));
+        // Sync alpha blending state with renderer before drawing
+        renderer.alphaBlending = alphaBlendingEnabled;
+        
+        // Render the Rubik's Cube with active animations
+        renderer.renderCube(activeCube, animation);
+        
+        // Render 2D HUD Help Menu overlay
+        hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode));
 
-    // Render scoring panel (top-right): live timer/move counter or last result
-    hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
+        // Render scoring panel (top-right): live timer/move counter or last result
+        hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
 
-    if (showStats) {
-        hud.renderStatsPanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
+        if (showStats) {
+            hud.renderStatsPanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
+        }
     }
     
     // Swap front and back buffers
@@ -161,8 +170,46 @@ void reshape(int width, int height) {
     setupPerspectiveProjection(45.0, aspect, 0.1, 100.0);
 }
 
-// Keyboard callback
 void keyboard(unsigned char key, int x, int y) {
+    if (welcomeScreen.isActive()) {
+        bool startGame = false;
+        if (welcomeScreen.handleKey(key, x, y, startGame)) {
+            if (startGame) {
+                const auto& cfg = welcomeScreen.getConfig();
+                activeCube = CubeFactory::create(cfg.cubeSize);
+                renderer.renderMode = cfg.renderMode;
+                Colors::setScheme(cfg.colorScheme);
+                alphaBlendingEnabled = cfg.glassMode;
+                practiceMode = cfg.practiceMode;
+
+                if (cfg.cubeSize == 2) camera.radius = 8.0f;
+                else if (cfg.cubeSize == 3) camera.radius = 10.0f;
+                else if (cfg.cubeSize == 4) camera.radius = 12.0f;
+                else if (cfg.cubeSize == 5) camera.radius = 14.0f;
+                else if (cfg.cubeSize == 6) camera.radius = 16.0f;
+                else if (cfg.cubeSize == 7) camera.radius = 18.0f;
+
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+
+                if (cfg.autoScramble) {
+                    int steps = (cfg.cubeSize == 2) ? 10 : (cfg.cubeSize == 3) ? 20 : (cfg.cubeSize == 4) ? 25 : (cfg.cubeSize == 5) ? 35 : (cfg.cubeSize == 6) ? 45 : 55;
+                    std::vector<Move> moves = Scrambler::generateScramble(cfg.cubeSize, steps);
+                    lastScramble = moves;
+                    isScrambling = true;
+                    animation.speed = 1800.0f;
+                    for (const auto& m : moves) {
+                        moveHistory.push_back(m);
+                        animation.queueMove(m);
+                    }
+                }
+            }
+            glutPostRedisplay();
+        }
+        return;
+    }
+
     switch (key) {
         case 27: // Escape key
             std::cout << "Exiting application." << std::endl;
@@ -354,6 +401,24 @@ void keyboard(unsigned char key, int x, int y) {
             std::cout << (scoreManager.isPaused() ? "Timer paused." : "Timer resumed.") << std::endl;
             break;
             
+        case 'O':
+        case 'o':
+        case '0':
+            {
+                WelcomeConfig cfg;
+                cfg.cubeSize = activeCube.getSize();
+                cfg.renderMode = renderer.renderMode;
+                cfg.colorScheme = Colors::getScheme();
+                cfg.glassMode = alphaBlendingEnabled;
+                cfg.practiceMode = practiceMode;
+                cfg.autoScramble = false;
+                welcomeScreen.setConfig(cfg);
+                welcomeScreen.setActive(true);
+                std::cout << "Opened Welcome Screen configuration." << std::endl;
+                glutPostRedisplay();
+            }
+            break;
+
         case 'M':
         case 'm':
             practiceMode = !practiceMode;
@@ -473,8 +538,13 @@ void keyboard(unsigned char key, int x, int y) {
     }
 }
 
-// Special keyboard keys (arrow keys rotation test)
 void specialKeys(int key, int x, int y) {
+    if (welcomeScreen.isActive()) {
+        welcomeScreen.handleSpecialKey(key, x, y);
+        glutPostRedisplay();
+        return;
+    }
+
     switch (key) {
         case GLUT_KEY_LEFT:
             camera.orbit(-5.0f, 0.0f);
@@ -492,8 +562,46 @@ void specialKeys(int key, int x, int y) {
     glutPostRedisplay();
 }
 
-// Mouse button callbacks
 void mouseButton(int button, int state, int x, int y) {
+    if (welcomeScreen.isActive()) {
+        bool startGame = false;
+        if (welcomeScreen.handleMouse(button, state, x, y, startGame)) {
+            if (startGame) {
+                const auto& cfg = welcomeScreen.getConfig();
+                activeCube = CubeFactory::create(cfg.cubeSize);
+                renderer.renderMode = cfg.renderMode;
+                Colors::setScheme(cfg.colorScheme);
+                alphaBlendingEnabled = cfg.glassMode;
+                practiceMode = cfg.practiceMode;
+
+                if (cfg.cubeSize == 2) camera.radius = 8.0f;
+                else if (cfg.cubeSize == 3) camera.radius = 10.0f;
+                else if (cfg.cubeSize == 4) camera.radius = 12.0f;
+                else if (cfg.cubeSize == 5) camera.radius = 14.0f;
+                else if (cfg.cubeSize == 6) camera.radius = 16.0f;
+                else if (cfg.cubeSize == 7) camera.radius = 18.0f;
+
+                moveHistory.clear();
+                solutionPlayer.setMoves({});
+                scoreManager.cancelSession();
+
+                if (cfg.autoScramble) {
+                    int steps = (cfg.cubeSize == 2) ? 10 : (cfg.cubeSize == 3) ? 20 : (cfg.cubeSize == 4) ? 25 : (cfg.cubeSize == 5) ? 35 : (cfg.cubeSize == 6) ? 45 : 55;
+                    std::vector<Move> moves = Scrambler::generateScramble(cfg.cubeSize, steps);
+                    lastScramble = moves;
+                    isScrambling = true;
+                    animation.speed = 1800.0f;
+                    for (const auto& m : moves) {
+                        moveHistory.push_back(m);
+                        animation.queueMove(m);
+                    }
+                }
+            }
+            glutPostRedisplay();
+        }
+        return;
+    }
+
     if (button == GLUT_LEFT_BUTTON) {
         if (state == GLUT_DOWN) {
             isLeftMouseDown = true;
