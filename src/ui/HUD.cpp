@@ -62,11 +62,19 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawPanel(20, startY + 4, 120, 1, 1.0f, 0.75f, 0.2f, 0.5f);
         startY += 20;
         drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Y / y", "Retry previous scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "C / c", "Cycle color scheme", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "X / x", "Reset cube to solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Space", "Pause/Resume timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "M / m", "Toggle practice mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "2", "Switch to 2x2 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "3", "Switch to 3x3 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "4", "Switch to 4x4 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "5", "Switch to 5x5 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "6", "Switch to 6x6 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "7", "Switch to 7x7 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "T / t", "Toggle Glass Cube (Alpha Blend)", GLUT_BITMAP_8_BY_13); startY += 35;
 
@@ -249,5 +257,99 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
     
+    restoreProjection();
+}
+
+void HUD::renderScorePanel(int width, int height, const ScoreManager& scoreManager, int cubeSize, bool practiceMode) {
+    setupOrthographicProjection(width, height);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int panelW = 200;
+    int panelX = width - panelW - 10;
+    // Sits just below the Glass Cube badge (which occupies y = 10..38)
+    int panelY = 48;
+
+    char buf[64];
+
+    if (scoreManager.isActive()) {
+        // --- Live session: move counter, stopwatch, live score estimate ---
+        int panelH = 92;
+        drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.85f);
+        drawBorder(panelX, panelY, panelW, panelH, 0.0f, 0.8f, 1.0f, 0.6f, 1.0f);
+
+        drawString(panelX + 12, panelY + 18, "SOLVE IN PROGRESS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+        
+        if (practiceMode) {
+            drawPanel(panelX + 140, panelY + 6, 54, 14, 0.6f, 0.2f, 0.6f, 0.8f);
+            drawString(panelX + 143, panelY + 16, "PRACTICE", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.8f, 1.0f);
+        }
+
+        if (scoreManager.isPaused()) {
+            drawString(panelX + 12, panelY + 40, "Time:  [PAUSED]", GLUT_BITMAP_8_BY_13, 1.0f, 0.55f, 0.0f);
+        } else {
+            double t = scoreManager.getElapsedSeconds();
+            int mins = (int)(t / 60.0);
+            double secs = t - mins * 60.0;
+            snprintf(buf, sizeof(buf), "Time:  %02d:%05.2f", mins, secs);
+            drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+        }
+
+        snprintf(buf, sizeof(buf), "Moves: %d", scoreManager.getMoveCount());
+        drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+        snprintf(buf, sizeof(buf), "Score: %d", scoreManager.getLiveScore());
+        drawString(panelX + 12, panelY + 76, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+    } else if (scoreManager.hasLastResult()) {
+        // --- Just finished: show result + personal best for this cube size ---
+        const ScoreEntry& last = scoreManager.getLastResult();
+        int best = scoreManager.getBestScore(cubeSize);
+        bool isNewBest = (last.score >= best) && last.cubeSize == cubeSize;
+
+        int panelH = 110;
+        drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.85f);
+        drawBorder(panelX, panelY, panelW, panelH,
+                   isNewBest ? 0.0f : 0.0f, isNewBest ? 1.0f : 0.8f, isNewBest ? 0.4f : 1.0f, 0.7f, 1.5f);
+
+        drawString(panelX + 12, panelY + 18, "SOLVE COMPLETE!", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+
+        int mins = (int)(last.timeSeconds / 60.0);
+        double secs = last.timeSeconds - mins * 60.0;
+        snprintf(buf, sizeof(buf), "Time:  %02d:%05.2f", mins, secs);
+        drawString(panelX + 12, panelY + 40, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+        snprintf(buf, sizeof(buf), "Moves: %d", last.moves);
+        drawString(panelX + 12, panelY + 58, buf, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+        snprintf(buf, sizeof(buf), "Score: %d", last.score);
+        drawString(panelX + 12, panelY + 76, buf, GLUT_BITMAP_8_BY_13, 0.0f, 1.0f, 0.6f);
+
+        if (isNewBest) {
+            drawString(panelX + 12, panelY + 96, "NEW BEST for this size!", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.85f, 0.0f);
+        } else {
+            snprintf(buf, sizeof(buf), "Best (this size): %d", best);
+            drawString(panelX + 12, panelY + 96, buf, GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+        }
+    } else {
+        // --- Idle / no session yet ---
+        int panelH = 44;
+        drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.65f);
+        drawBorder(panelX, panelY, panelW, panelH, 0.2f, 0.2f, 0.25f, 0.5f, 1.0f);
+        drawString(panelX + 12, panelY + 18, "Press 'S' to scramble", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+
+        int best = scoreManager.getBestScore(cubeSize);
+        if (best > 0) {
+            snprintf(buf, sizeof(buf), "Best (this size): %d", best);
+            drawString(panelX + 12, panelY + 36, buf, GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+        }
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+
     restoreProjection();
 }

@@ -13,13 +13,10 @@ namespace Colors {
         NONE
     };
 
-    extern const Vec3 RGB_WHITE;
-    extern const Vec3 RGB_YELLOW;
-    extern const Vec3 RGB_RED;
-    extern const Vec3 RGB_ORANGE;
-    extern const Vec3 RGB_BLUE;
-    extern const Vec3 RGB_GREEN;
-    extern const Vec3 RGB_BLACK;
+    enum class Scheme { CLASSIC, PASTEL, HIGH_CONTRAST, COUNT };
+
+    void setScheme(Scheme s);
+    Scheme getScheme();
 
     Vec3 getColorVec(ColorName color);
     const char* getColorNameString(ColorName color);
