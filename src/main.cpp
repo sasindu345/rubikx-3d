@@ -41,6 +41,7 @@ SolutionPlayer solutionPlayer;
 HUD hud;
 ScoreManager scoreManager;
 bool showHelp = true;
+bool practiceMode = false;
 
 // Move history tracker
 std::vector<Move> moveHistory;
@@ -96,7 +97,7 @@ void display() {
     hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled);
 
     // Render scoring panel (top-right): live timer/move counter or last result
-    hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
+    hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
     
     // Swap front and back buffers
     glutSwapBuffers();
@@ -233,6 +234,12 @@ void keyboard(unsigned char key, int x, int y) {
         case ' ':
             scoreManager.togglePause();
             std::cout << (scoreManager.isPaused() ? "Timer paused." : "Timer resumed.") << std::endl;
+            break;
+            
+        case 'M':
+        case 'm':
+            practiceMode = !practiceMode;
+            std::cout << "Practice mode: " << (practiceMode ? "ON (scores won't be saved)" : "OFF") << std::endl;
             break;
         
         // Switch Cube Size (2: 2x2, 3: 3x3, 4: 4x4, 5: 5x5, 6: 6x6, 7: 7x7)
@@ -455,10 +462,15 @@ void timer(int value) {
             // Score the attempt if a timed session was running with at least
             // one real move (avoids scoring a no-op "solve" right after reset)
             if (scoreManager.isActive() && scoreManager.getMoveCount() > 0) {
-                ScoreEntry result = scoreManager.finishSession();
-                std::cout << "Score: " << result.score
-                          << " | Moves: " << result.moves
-                          << " | Time: " << result.timeSeconds << "s" << std::endl;
+                if (practiceMode) {
+                    scoreManager.cancelSession(); // discard without saving
+                    std::cout << "Practice mode active - session discarded." << std::endl;
+                } else {
+                    ScoreEntry result = scoreManager.finishSession();
+                    std::cout << "Score: " << result.score
+                              << " | Moves: " << result.moves
+                              << " | Time: " << result.timeSeconds << "s" << std::endl;
+                }
             } else if (scoreManager.isActive()) {
                 scoreManager.cancelSession();
             }

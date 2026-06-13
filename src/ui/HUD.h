@@ -21,5 +21,5 @@ public:
     // Renders the scoring panel (top-right, below the Glass Cube badge):
     // live move counter + stopwatch while solving, and the score/best
     // score once a solve has been completed.
-    void renderScorePanel(int width, int height, const ScoreManager& scoreManager, int cubeSize);
+    void renderScorePanel(int width, int height, const ScoreManager& scoreManager, int cubeSize, bool practiceMode);
 };
