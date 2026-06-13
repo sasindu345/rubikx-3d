@@ -37,8 +37,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
     // Disable depth testing and lighting for 2D rendering
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
-    int leftPanelW = 310;
-    int rightPanelW = 310;
+    int leftPanelW = 250;
 
     // 1. Draw left help panel if visible
     if (showHelp) {
@@ -48,81 +47,59 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawPanel(leftPanelW - 2, 0, 2, height, 0.2f, 0.4f, 0.6f, 0.6f);
 
         int startY = 35;
-        int lineSpacing = 20;
+        int lineSpacing = 18;
 
         // Title
         drawString(20, startY, "RUBIKX-3D SYSTEM", GLUT_BITMAP_HELVETICA_18, 1.0f, 0.6f, 0.1f);
-        startY += 18;
+        startY += 16;
         drawString(20, startY, "Interactive Learning & Solving", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
-        startY += 30;
+        startY += 28;
 
-        // --- SYSTEM CONTROLS ---
-        drawString(20, startY, "SYSTEM CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(20, startY + 4, 120, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+        // Lambda helper for two-column moves listing
+        auto draw2Col = [&](int x, int y, const std::string& key, const std::string& desc) {
+            drawString(x, y, key, GLUT_BITMAP_8_BY_13, 0.0f, 0.8f, 1.0f);
+            drawString(x + 42, y, desc, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+        };
+
+        // --- SECTION 1: CUBE MOVES ---
+        drawString(20, startY, "CUBE MOVES (CW / CCW)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.3f, 0.3f); // Red header
+        drawPanel(20, startY + 4, 150, 1, 1.0f, 0.3f, 0.3f, 0.5f);
         startY += 20;
-        drawControlLine(20, startY, "S / s", "Scramble puzzle (20 turns)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Shift + 1", "Pattern: Checkerboard", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Shift + 2", "Pattern: Superflip", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Shift + 3", "Pattern: Cube in Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Y / y", "Retry previous scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Z / z", "Solve cube (History Reversal)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "A / a", "Input algorithm notation", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "C / c", "Cycle color scheme", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "X / x", "Reset cube to solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Space", "Pause/Resume timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "M / m", "Toggle practice mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "H / h", "Toggle this help menu", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "I / i", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "2", "Switch to 2x2 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "3", "Switch to 3x3 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "4", "Switch to 4x4 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "5", "Switch to 5x5 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "6", "Switch to 6x6 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "7", "Switch to 7x7 Rubik's Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Esc", "Exit application", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "T / t", "Toggle Glass Cube (Alpha Blend)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "W / w", "Cycle Render Mode (Solid/Wire/Tex)", GLUT_BITMAP_8_BY_13); startY += 35;
 
-        // --- SECOND HELP PANEL (RIGHT SIDE) ---
-        int rightPanelX = width - rightPanelW;
-        int rightPanelY = 170; // Positioned safely below the score panel
-        int rightPanelH = height - rightPanelY;
+        draw2Col(20, startY, "R / r", "Right");  draw2Col(135, startY, "D / d", "Down");  startY += lineSpacing;
+        draw2Col(20, startY, "L / l", "Left");   draw2Col(135, startY, "F / f", "Front"); startY += lineSpacing;
+        draw2Col(20, startY, "U / u", "Up");     draw2Col(135, startY, "B / b", "Back");  startY += 28;
 
-        // Draw main dark panel
-        drawPanel(rightPanelX, rightPanelY, rightPanelW, rightPanelH, 0.08f, 0.08f, 0.1f, 0.85f);
-        // Draw glowing left border
-        drawPanel(rightPanelX, rightPanelY, 2, rightPanelH, 0.2f, 0.4f, 0.6f, 0.6f);
+        // --- SECTION 2: GAME ACTIONS ---
+        drawString(20, startY, "GAME ACTIONS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f); // Orange header
+        drawPanel(20, startY + 4, 110, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+        startY += 20;
 
-        int rStartY = rightPanelY + 20;
+        drawControlLine(20, startY, "S", "Scramble Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Z", "Auto-Solve", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "X", "Reset solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Y", "Retry last scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "A", "Input algorithm string", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "!,@,#", "Apply Patterns 3x3", GLUT_BITMAP_8_BY_13); startY += 28;
 
-        // --- SOLUTION PLAYBACK ---
-        drawString(rightPanelX + 20, rStartY, "PLAYBACK CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(rightPanelX + 20, rStartY + 4, 135, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        rStartY += 20;
-        drawControlLine(rightPanelX + 20, rStartY, "P / p", "Play / Pause autoplay", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, ", / <", "Step backward (Undo move)", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, ". / >", "Step forward (Play move)", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, "- / +", "Adjust playback speed", GLUT_BITMAP_8_BY_13); rStartY += 35;
+        // --- SECTION 3: SYSTEM SETTINGS ---
+        drawString(20, startY, "SETTINGS & VIEW", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f); // Cyan header
+        drawPanel(20, startY + 4, 130, 1, 0.0f, 0.8f, 1.0f, 0.5f);
+        startY += 20;
 
-        // --- CAMERA CONTROLS ---
-        drawString(rightPanelX + 20, rStartY, "CAMERA VIEW", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(rightPanelX + 20, rStartY + 4, 90, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        rStartY += 20;
-        drawString(rightPanelX + 20, rStartY, "Left Click + Drag: Orbit view", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += lineSpacing;
-        drawString(rightPanelX + 20, rStartY, "Right Click + Drag: Zoom view", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += lineSpacing;
-        drawString(rightPanelX + 20, rStartY, "Scroll Wheel: Zoom in/out", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += lineSpacing;
-        drawString(rightPanelX + 20, rStartY, "Arrow Keys: Orbit view step", GLUT_BITMAP_HELVETICA_12, 0.85f, 0.85f, 0.9f); rStartY += 35;
+        drawControlLine(20, startY, "O", "Setup Menu (Start)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "2 - 7", "Switch Cube Size", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "C", "Cycle Color Schemes", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "T", "Toggle Glass Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "W", "Toggle Render Style", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "M", "Toggle Practice Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Space", "Pause/Resume Timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "I", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "H", "Toggle HUD overlay", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "Esc", "Exit Application", GLUT_BITMAP_8_BY_13); startY += 22;
 
-        // --- MANUAL ROTATIONS ---
-        drawString(rightPanelX + 20, rStartY, "MANUAL TURNS (CW / CCW)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
-        drawPanel(rightPanelX + 20, rStartY + 4, 160, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        rStartY += 20;
-        drawControlLine(rightPanelX + 20, rStartY, "R / r", "Right face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, "L / l", "Left face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, "U / u", "Up (Top) face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, "D / d", "Down (Bottom) rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, "F / f", "Front face rotation", GLUT_BITMAP_8_BY_13); rStartY += lineSpacing;
-        drawControlLine(rightPanelX + 20, rStartY, "B / b", "Back face rotation", GLUT_BITMAP_8_BY_13);
+        // Camera hint
+        drawString(20, startY, "Drag Mouse / Arrow Keys to Rotate camera", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
     } else {
         // Simple minimized HUD banner at top-left
         drawPanel(10, 10, 190, 30, 0.08f, 0.08f, 0.1f, 0.75f);
@@ -153,7 +130,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
     {
         int badgeW = 200;
         int badgeX = width - badgeW - 10;
-        int badgeY = 45; // Below the Glass Cube badge
+        int badgeY = 44; // Below Glass Cube badge (10 + 28 + 6 gap)
         int badgeH = 28;
         
         std::string modeText;
@@ -177,7 +154,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
     // 2. Playback Dashboard (Bottom Center)
     if (player.getMoveCount() > 0) {
         int startX = showHelp ? leftPanelW + 20 : 30;
-        int endX = showHelp ? width - rightPanelW - 20 : width - 30;
+        int endX = width - 30;
         int dashW = 680;
         
         // Center the dashboard in the available space if space is larger than dashW
@@ -312,8 +289,8 @@ void HUD::renderScorePanel(int width, int height, const ScoreManager& scoreManag
 
     int panelW = 200;
     int panelX = width - panelW - 10;
-    // Sits just below the Glass Cube badge (which occupies y = 10..38)
-    int panelY = 48;
+    // Sits below both badges: Glass Cube (y=10..38) + Render Mode (y=44..72) + gap
+    int panelY = 82;
 
     char buf[64];
 
