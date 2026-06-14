@@ -92,6 +92,8 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawControlLine(20, startY, "C", "Cycle Color Schemes", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "T", "Toggle Glass Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "W", "Toggle Render Style", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "E / e", "Explode / Contract", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "K", "Toggle Orbiting Light", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "M", "Toggle Practice Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Space", "Pause/Resume Timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "I", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); startY += lineSpacing;

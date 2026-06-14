@@ -1,6 +1,11 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Isrc -Isrc/algorithms -Isrc/cube -Isrc/solver -Isrc/ui -Isrc/utils -Wno-deprecated-declarations
-LDFLAGS = -framework OpenGL -framework GLUT -framework Cocoa -framework IOKit -framework CoreVideo
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS = -framework OpenGL -framework GLUT -framework Cocoa -framework IOKit -framework CoreVideo
+else
+    LDFLAGS = -lglut -lGLU -lGL
+endif
 
 # Directories
 SRC_DIRS = src src/algorithms src/cube src/solver src/ui src/utils
