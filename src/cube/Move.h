@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 enum class Face {
     RIGHT = 0, // R
@@ -33,4 +34,5 @@ struct Move {
 
     std::string toString() const;
     static Move parse(const std::string& str);
+    static std::vector<Move> parseAlgorithm(const std::string& algStr, int cubeSize = 0);
 };

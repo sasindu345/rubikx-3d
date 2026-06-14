@@ -13,7 +13,7 @@ RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learni
 5. **Transparency & Alpha Blending (Glass Cube):** Semi-transparent rendering mode using OpenGL alpha blending (`GL_BLEND`) and depth sorting (Painter's algorithm) to reveal internal structure.
 6. **Multiple Color Scheme Palettes:** Dynamic cycle through Classic, Pastel, and High Contrast color schemes for sticker faces using the `C` key.
 7. **Random Solvable Scrambling:** Scramble generation with custom move counts scaled based on the cube size (from 10 moves for 2x2 up to 55 moves for 7x7) to ensure valid, solvable configurations.
-8. **Step-by-Step Interactive Solver:** Play, pause, slow down, speed up, advance a step, or reverse a step through auto-solved solutions. Includes keyboard shortcuts for checkerboard, superflip, and cube-in-cube patterns on 3x3 cubes.
+8. **Step-by-Step Interactive Solver:** Play, pause, slow down, speed up, advance a step, or reverse a step through auto-solved solutions. Includes keyboard shortcuts for checkerboard, superflip, and cube-in-cube patterns on various cube sizes.
 9. **Interactive 3D Viewport:** Free orbit-camera navigation with click-and-drag mouse controls, panning, and scroll-wheel zoom.
 
 ---
@@ -23,7 +23,7 @@ RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learni
 * **Language:** C++17
 * **Graphics API:** OpenGL 2.1 (fixed-function pipeline)
 * **Windowing & Inputs:** GLUT / FreeGLUT
-* **Build System:** Makefile (macOS & Windows/Linux compatibility) and CMake support
+* **Build System:** CMake (cross-platform support)
 
 ---
 
@@ -32,7 +32,6 @@ RubikX-3D is a feature-rich, high-performance interactive 3D Rubik's Cube learni
 ```
 rubikx-3d/
 ├── CMakeLists.txt                 # CMake build configuration
-├── Makefile                       # Main Makefile for building on macOS/Linux
 ├── README.md                      # Project documentation (this file)
 │
 ├── src/                           # Source & Header Files
@@ -81,20 +80,11 @@ rubikx-3d/
 
 ---
 
-## 🚀 How to Build and Run (macOS)
+## 🚀 How to Build and Run (Cross-Platform)
 
-### Option A: Using standard `make` (Recommended)
+This project uses **CMake** as the unified cross-platform build system.
 
-1. Simply run `make` inside the root directory:
-   ```bash
-   make
-   ```
-2. Run the executable:
-   ```bash
-   ./RubikX3D
-   ```
-
-### Option B: Using CMake
+### 🍎 macOS
 
 1. Install dependencies:
    ```bash
@@ -102,13 +92,42 @@ rubikx-3d/
    ```
 2. Configure and build:
    ```bash
-   mkdir -p build && cd build
-   cmake ..
-   make
+   cmake -B build
+   cmake --build build
    ```
 3. Run the executable:
    ```bash
-   ./RubikX3D
+   ./build/RubikX3D
+   ```
+
+### 🐧 Linux (Ubuntu/Debian)
+
+1. Install dependencies:
+   ```bash
+   sudo apt update
+   sudo apt install build-essential cmake freeglut3-dev libglew-dev
+   ```
+2. Configure and build:
+   ```bash
+   cmake -B build
+   cmake --build build
+   ```
+3. Run the executable:
+   ```bash
+   ./build/RubikX3D
+   ```
+
+### 🪟 Windows
+
+1. Install [CMake](https://cmake.org/download/) and a C++ compiler (such as **Visual Studio** with the *C++ Desktop Development* workload).
+2. Configure and build (run in Command Prompt or PowerShell):
+   ```cmd
+   cmake -B build
+   cmake --build build --config Release
+   ```
+3. Run the executable:
+   ```cmd
+   .\build\Release\RubikX3D.exe
    ```
 
 ---
@@ -146,8 +165,7 @@ Rotate the outer layers of the active face. Use **Uppercase** letters for Clockw
 * `Z` / `z`: Auto-solve the current cube state (populates solution steps)
 * `X` / `x`: Reset cube instantly to solved state
 * `Y` / `y`: Retry the last generated scramble sequence
-* `A` / `a`: Input custom algorithm string directly in the terminal window (e.g. `R U R' U'`)
-* `!` / `@` / `#`: Apply standard patterns to 3x3 cube (Checkerboard, Superflip, Cube-in-Cube)
+* `!` / `@` / `#`: Apply standard patterns to the cube (Checkerboard on all sizes, Superflip on >= 3, Cube-in-Cube on >= 2)
 
 #### 3. Settings & View
 

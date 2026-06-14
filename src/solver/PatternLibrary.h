@@ -10,5 +10,5 @@ struct CubePattern {
 
 class PatternLibrary {
 public:
-    static std::vector<CubePattern> getPatterns3x3();
+    static std::vector<CubePattern> getPatterns(int size);
 };
