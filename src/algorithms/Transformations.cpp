@@ -42,3 +42,11 @@ void applyCubieTransform(float rotAngle, float ax, float ay, float az, float tx,
 void restoreTransform() {
     glPopMatrix();
 }
+
+void applyExplosionOffset(float& tx, float& ty, float& tz, float factor) {
+    if (factor > 0.001f) {
+        tx *= (1.0f + factor);
+        ty *= (1.0f + factor);
+        tz *= (1.0f + factor);
+    }
+}
