@@ -283,13 +283,8 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
         // expanded).  We scale by the cubie's distance from center
         // so corner pieces move further than edge/center pieces.
         //
-        // Formula:  T' = T + explosionFactor * T  (component-wise)
-        //         = T * (1 + explosionFactor)
-        if (explosionFactor > 0.001f) {
-            d.tx *= (1.0f + explosionFactor);
-            d.ty *= (1.0f + explosionFactor);
-            d.tz *= (1.0f + explosionFactor);
-        }
+        // Uses the transformation algorithm from src/algorithms/Transformations.cpp
+        applyExplosionOffset(d.tx, d.ty, d.tz, explosionFactor);
 
         d.rotAngle = 0.0f;
         d.ax = d.ay = d.az = 0.0f;

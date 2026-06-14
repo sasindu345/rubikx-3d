@@ -128,56 +128,8 @@ int lastMouseX = 0;
 int lastMouseY = 0;
 
 // ── Dynamic Procedural Background Gradient ───────────────────────
-// Renders a full-screen quad with per-vertex colours that are
-// linearly interpolated (Gouraud shading) by the fixed-function
-// pipeline. This produces a smooth cosmic gradient without any
-// texture overhead.
-//
-// Theory: Colour Interpolation / Gouraud Shading
-//   The GPU interpolates vertex colours across the polygon using
-//   barycentric coordinates, producing a smooth gradient:
-//     C(x,y) = alpha * C_v0 + beta * C_v1 + gamma * C_v2
-void drawBackgroundGradient(int width, int height) {
-    // Switch to 2D orthographic projection for the full-screen quad
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, width, height, 0); // origin top-left
+// Uses the Gouraud shading algorithm from src/algorithms/Shading.cpp
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    // Disable depth/lighting — the gradient sits behind everything
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDepthMask(GL_FALSE);
-
-    glBegin(GL_QUADS);
-    // Top-left:  deep dark indigo
-    glColor3f(0.06f, 0.04f, 0.14f);
-    glVertex2i(0, 0);
-    // Top-right: dark midnight blue
-    glColor3f(0.04f, 0.08f, 0.18f);
-    glVertex2i(width, 0);
-    // Bottom-right: dark teal
-    glColor3f(0.03f, 0.12f, 0.16f);
-    glVertex2i(width, height);
-    // Bottom-left: very dark purple
-    glColor3f(0.08f, 0.04f, 0.12f);
-    glVertex2i(0, height);
-    glEnd();
-
-    // Restore state
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
 
 // Display callback
 void display() {
@@ -190,7 +142,12 @@ void display() {
         welcomeScreen.render(windowWidth, windowHeight);
     } else {
         // ── Draw background gradient behind the 3D scene ──
-        drawBackgroundGradient(windowWidth, windowHeight);
+        renderGradientBackground(windowWidth, windowHeight, 
+            0.06f, 0.04f, 0.14f,  // Top-left: deep dark indigo
+            0.04f, 0.08f, 0.18f,  // Top-right: dark midnight blue
+            0.03f, 0.12f, 0.16f,  // Bottom-right: dark teal
+            0.08f, 0.04f, 0.12f   // Bottom-left: very dark purple
+        );
 
         // Normal gameplay rendering
         // Reset modelview transformation
