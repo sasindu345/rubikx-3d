@@ -1,4 +1,20 @@
+// ================================================
+// THEORY: Shading & Lighting
+// LECTURE: Visible Surface Detection and Shading
+// ALGORITHM: Phong Illumination Model (Diffuse + Specular)
+// MATHEMATICS:
+//   I = Ia * Ka  +  Id * Kd * (N . L)  +  Is * Ks * (R . V)^n
+//   where Ia/Id/Is = ambient/diffuse/specular light intensity
+//         Ka/Kd/Ks = material ambient/diffuse/specular coefficients
+//         N = surface normal, L = light direction, V = view direction
+//         R = reflected light direction, n = shininess exponent
+// USED BY: Renderer.cpp, main.cpp
+// USER RESULT: Realistic face reflections with dynamic orbiting light source.
+// RESPONSIBLE MEMBER: Member 2
+// ================================================
+
 #include "Lighting.h"
+#include <cmath>
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -50,4 +66,59 @@ void Lighting::apply() {
     // Fill light positioned at bottom-left-back
     float lightPos1[] = { -7.0f, -5.0f, -6.0f, 1.0f };
     glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
+}
+
+void Lighting::apply(float orbitAngleDeg, float orbitRadius) {
+    // --------------------------------------------------------
+    // Orbiting key light (GL_LIGHT0):
+    // The light source orbits around the Y axis at a fixed
+    // elevation, producing dynamically changing specular
+    // highlights on the cube faces.
+    //
+    // Parametric circle:
+    //   x = r * sin(theta)
+    //   y = fixed elevation
+    //   z = r * cos(theta)
+    // --------------------------------------------------------
+    float rad = orbitAngleDeg * 3.14159265f / 180.0f;
+    float lx = orbitRadius * std::sin(rad);
+    float ly = 8.0f; // Slightly elevated
+    float lz = orbitRadius * std::cos(rad);
+
+    float lightPos0[] = { lx, ly, lz, 1.0f };
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+
+    // Fill light stays in a fixed position (bottom-left-back)
+    float lightPos1[] = { -7.0f, -5.0f, -6.0f, 1.0f };
+    glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
+}
+
+void Lighting::renderLightIndicator(float orbitAngleDeg, float orbitRadius) {
+    // --------------------------------------------------------
+    // Renders a small glowing wireframe sphere at the position
+    // of the orbiting key light so the user can see it.
+    // Lighting is temporarily disabled so the indicator uses
+    // a constant emissive colour unaffected by scene shading.
+    // --------------------------------------------------------
+    float rad = orbitAngleDeg * 3.14159265f / 180.0f;
+    float lx = orbitRadius * std::sin(rad);
+    float ly = 8.0f;
+    float lz = orbitRadius * std::cos(rad);
+
+    glDisable(GL_LIGHTING);
+
+    glPushMatrix();
+    glTranslatef(lx, ly, lz);
+
+    // Bright yellow-white emissive colour for the light bulb
+    glColor3f(1.0f, 0.95f, 0.6f);
+    glutWireSphere(0.25, 12, 8);
+
+    // Draw a subtle outer glow ring (slightly larger, dimmer)
+    glColor4f(1.0f, 0.85f, 0.3f, 0.3f);
+    glutWireSphere(0.40, 8, 6);
+
+    glPopMatrix();
+
+    glEnable(GL_LIGHTING);
 }
