@@ -275,6 +275,22 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
         d.tx = cubie.ix - halfSize;
         d.ty = cubie.iy - halfSize;
         d.tz = cubie.iz - halfSize;
+
+        // ── Exploded View Transformation ─────────────────────
+        // Push each cubie outward from the cube centre along its
+        // radial direction vector.  The displacement magnitude is
+        // proportional to explosionFactor (0 = compact, 1 = fully
+        // expanded).  We scale by the cubie's distance from center
+        // so corner pieces move further than edge/center pieces.
+        //
+        // Formula:  T' = T + explosionFactor * T  (component-wise)
+        //         = T * (1 + explosionFactor)
+        if (explosionFactor > 0.001f) {
+            d.tx *= (1.0f + explosionFactor);
+            d.ty *= (1.0f + explosionFactor);
+            d.tz *= (1.0f + explosionFactor);
+        }
+
         d.rotAngle = 0.0f;
         d.ax = d.ay = d.az = 0.0f;
         animation.getCubieRotation(cubie.ix, cubie.iy, cubie.iz, size,

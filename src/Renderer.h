@@ -22,6 +22,14 @@ public:
     // Active rendering mode (Solid, Wireframe, Textured)
     RenderMode renderMode = RenderMode::SOLID;
 
+    // ── Exploded Cube View ────────────────────────────────────────
+    // Controls how far cubies spread outward from the centre.
+    // 0.0 = normal compact cube, 1.0 = fully expanded (each cubie
+    // pushed outward by ~1 unit along its radial direction).
+    // The translation formula is:
+    //   T_exploded = T_original + explosionFactor * normalize(T_original)
+    float explosionFactor = 0.0f;
+
     // Renders the entire Rubik's Cube in 3D, applying active rotation animations
     void renderCube(const RubiksCube& cube, const Animation& animation);
 
