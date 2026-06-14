@@ -1,3 +1,27 @@
+/*
+--------------------------------------------------
+Module: Animation Controller
+
+Purpose:
+Orchestrates face slice rotation move animations, tracking current animation status
+and resolving cubie rotations relative to active movements.
+
+Graphics Concepts:
+- Frame-Based Animation
+- Keyframe Transitions
+- Coordinate Transformation Animation
+
+Mathematics:
+- Vector/Axis rotations (Direction sign mapping)
+- Slice boundary coordinate matching inequalities
+
+Responsibilities:
+- Queueing and parsing moves for playback and interaction
+- Driving the frame tick updates via interpolation
+- Associating active rotations with specific coordinate layers of cubies
+--------------------------------------------------
+*/
+
 #include "Animation.h"
 #include "algorithms/Algorithms.h"
 

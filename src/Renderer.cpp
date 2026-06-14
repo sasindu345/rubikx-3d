@@ -1,3 +1,31 @@
+/*
+--------------------------------------------------
+Module: Rubik's Cube Renderer
+
+Purpose:
+Manages the visual rendering of the Rubik's Cube structure, including normal opaque
+drawing, procedural sticker textures, wireframe styling, and alpha blending for glass cube mode.
+
+Graphics Concepts:
+- Render Pass Pipeline
+- Procedural Texturing
+- Alpha Compositing & Transparency
+- Z-Fighting Resolution (Offsets)
+- Painter's Algorithm (Depth Sorting)
+
+Mathematics:
+- Distance formulas for procedural sticker corners ($x^4 + y^4 = r^4$)
+- Modelview coordinate transformation matrix multiplication for depth sorting (cz = mv_mat * tx_vec)
+- Over-compositing equation ($C_{out} = C_{src} \cdot A_{src} + C_{dst} \cdot (1 - A_{src})$)
+
+Responsibilities:
+- Initializing procedural rounded-corner textures
+- Drawing base cubies and sticker facelets
+- Sorting cubies back-to-front relative to camera for transparent alpha rendering
+- Controlling OpenGL state flags for blending, lighting, and wireframe polygon modes
+--------------------------------------------------
+*/
+
 #include "Renderer.h"
 #include "Animation.h"
 #include "algorithms/Transformations.h"

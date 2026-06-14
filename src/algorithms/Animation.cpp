@@ -1,14 +1,25 @@
-// ================================================
-// THEORY: Computer Animation
-// LECTURE: Computer Animation and Timing
-// ALGORITHM: Linear interpolation (LERP) and timer-based rendering updates
-// MATHEMATICS: Simple differential equation step updates
-// FORMULA: 
-//   theta(t) = theta_0 + speed * delta_t
-// USED BY: Animation.cpp, main.cpp
-// USER RESULT: Smooth face slice rotation animations and playback transitions.
-// RESPONSIBLE MEMBER: Member 4
-// ================================================
+/*
+--------------------------------------------------
+Module: Animation Utilities
+
+Purpose:
+Provides linear interpolation utility functions to compute smooth
+frame-to-frame angle transitions for face rotation animations.
+
+Graphics Concepts:
+- Keyframe Animation
+- Transformation Animation
+- Linear Interpolation (LERP)
+
+Mathematics:
+- First-order Euler step updates
+- Angle accumulation and bounding checks
+
+Responsibilities:
+- Interpolating the rotation angle based on elapsed time and animation speed
+- Updating active animation state when limit values are reached
+--------------------------------------------------
+*/
 
 #include "Animation.h"
 

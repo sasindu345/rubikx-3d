@@ -1,15 +1,27 @@
-// ================================================
-// THEORY: 3D Transformations
-// LECTURE: 3D Transformation and Viewing
-// ALGORITHM: Translation and Rotation Matrices
-// MATHEMATICS: Homogeneous coordinate system calculations
-// FORMULA: 
-//   T(tx, ty, tz) = [1 0 0 tx; 0 1 0 ty; 0 0 1 tz; 0 0 0 1]
-//   Rx(theta)     = [1 0 0 0; 0 cos(theta) -sin(theta) 0; 0 sin(theta) cos(theta) 0; 0 0 0 1]
-// USED BY: Renderer.cpp
-// USER RESULT: Rotates and translates individual cubies to form the Rubik's Cube structure.
-// RESPONSIBLE MEMBER: Member 1
-// ================================================
+/*
+--------------------------------------------------
+Module: 3D Transformations
+
+Purpose:
+Provides translation and rotation transformations for positioning
+and animating individual cubies in 3D space.
+
+Graphics Concepts:
+- 3D Translation
+- 3D Rotation
+- Composite Transformations
+
+Mathematics:
+- Homogeneous Coordinate Matrices
+- Rotation Matrix Calculations
+- Translation Vector Calculations
+
+Responsibilities:
+- Pushing matrix transformations for slice and block rotators
+- Performing translation matrix mappings
+- Restoring transform matrix state
+--------------------------------------------------
+*/
 
 #include "Transformations.h"
 

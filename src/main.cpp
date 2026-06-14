@@ -49,7 +49,6 @@ HUD hud;
 ScoreManager scoreManager;
 bool showHelp = true;
 bool practiceMode = false;
-bool awaitingAlgInput = false;
 bool showStats = false;
 
 // ── Feature: Exploded Cube View ──────────────────────────────────
@@ -88,32 +87,20 @@ void queueUserMove(const Move& m) {
     animation.queueMove(m);
 }
 
-void applyPattern3x3(int index) {
-    if (activeCube.getSize() != 3) {
-        std::cout << "Patterns currently only defined for 3x3." << std::endl;
-        return;
-    }
+void applyPattern(int index) {
     if (!animation.isAnimating() && animation.moveQueue.empty()) {
         activeCube.reset();
         moveHistory.clear();
         solutionPlayer.setMoves({});
         scoreManager.cancelSession();
 
-        auto patterns = PatternLibrary::getPatterns3x3();
+        auto patterns = PatternLibrary::getPatterns(activeCube.getSize());
         if (index < 0 || index >= patterns.size()) return;
         const auto& pattern = patterns[index];
         std::cout << "Applying pattern: " << pattern.name << std::endl;
         for (const auto& tok : pattern.algorithm) {
-            std::string parseToken = tok;
-            bool isDouble = false;
-            if (!parseToken.empty() && parseToken.back() == '2') {
-                isDouble = true;
-                parseToken.pop_back(); // Remove '2'
-            }
-            Move m = Move::parse(parseToken);
-            moveHistory.push_back(m);
-            animation.queueMove(m);
-            if (isDouble) {
+            auto moves = Move::parseAlgorithm(tok, activeCube.getSize());
+            for (const auto& m : moves) {
                 moveHistory.push_back(m);
                 animation.queueMove(m);
             }
@@ -179,7 +166,7 @@ void display() {
         }
         
         // Render 2D HUD Help Menu overlay
-        hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode));
+        hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode), activeCube.getSize());
 
         // Render scoring panel (top-right): live timer/move counter or last result
         hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
@@ -358,9 +345,9 @@ void keyboard(unsigned char key, int x, int y) {
             break;
             
         // Patterns (!, @, #)
-        case '!': applyPattern3x3(0); break; // Checkerboard
-        case '@': applyPattern3x3(1); break; // Superflip
-        case '#': applyPattern3x3(2); break; // Cube in Cube
+        case '!': applyPattern(0); break; // Checkerboard
+        case '@': applyPattern(1); break; // Superflip/Cube in Cube
+        case '#': applyPattern(2); break; // Cube in Cube
         
         // Scramble
         case 'S':
@@ -388,31 +375,7 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
             
-        case 'A':
-        case 'a':
-            if (!animation.isAnimating() && animation.moveQueue.empty()) {
-                awaitingAlgInput = true;
-                std::cout << "\nEnter algorithm (e.g. \"R U R' U'\").\n"
-                          << "Note: Type in the terminal window, then press Enter.\n"
-                          << "> ";
-                std::string line;
-                std::getline(std::cin, line);
 
-                std::istringstream iss(line);
-                std::string token;
-                std::vector<Move> alg;
-                while (iss >> token) {
-                    alg.push_back(Move::parse(token));
-                }
-
-                std::cout << "Queuing " << alg.size() << " moves." << std::endl;
-                for (const auto& m : alg) {
-                    queueUserMove(m);
-                }
-                awaitingAlgInput = false;
-            }
-            break;
-            
         case 'Y':
         case 'y':
             if (!animation.isAnimating() && animation.moveQueue.empty() && !lastScramble.empty()) {

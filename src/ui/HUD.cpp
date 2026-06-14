@@ -1,3 +1,30 @@
+/*
+--------------------------------------------------
+Module: Head-Up Display (HUD) System
+
+Purpose:
+Renders 2D graphical overlay interface widgets, menus, solve metrics, status badges,
+and move sequence playback indicators on top of the 3D viewport canvas.
+
+Graphics Concepts:
+- 2D Orthographic Projections
+- Disabling Depth Buffer / Lighting States
+- Layered UI Panels (Glassmorphic Translucent Cards)
+- Raster Font Text Alignment
+
+Mathematics:
+- Discretized View Coordinates
+- Centering offsets and viewport margins
+- Bitwise UI column slot calculation algorithms
+
+Responsibilities:
+- Setting up orthographic overlay viewport projections
+- Rasterizing background cards and colored layout borders
+- Formatting and printing text metrics (elapsed time, score, move counter)
+- Displaying active solution playback history tape indicators
+--------------------------------------------------
+*/
+
 #include "HUD.h"
 #include "algorithms/Algorithms.h"
 #include <cstdio>
@@ -30,7 +57,7 @@ void HUD::drawControlLine(int x, int y, const std::string& key, const std::strin
     drawString(x + 75, y, desc, font, 0.85f, 0.85f, 0.9f);
 }
 
-void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending, int renderMode) {
+void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending, int renderMode, int cubeSize) {
     // 2D viewing transformation
     setupOrthographicProjection(width, height);
 
@@ -79,8 +106,11 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
         drawControlLine(20, startY, "Z", "Auto-Solve", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "X", "Reset solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
         drawControlLine(20, startY, "Y", "Retry last scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "A", "Input algorithm string", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "!,@,#", "Apply Patterns 3x3", GLUT_BITMAP_8_BY_13); startY += 28;
+        if (cubeSize == 2) {
+            drawControlLine(20, startY, "!,@", "Apply Patterns 2x2", GLUT_BITMAP_8_BY_13); startY += 28;
+        } else {
+            drawControlLine(20, startY, "!,@,#", "Apply Patterns " + std::to_string(cubeSize) + "x" + std::to_string(cubeSize), GLUT_BITMAP_8_BY_13); startY += 28;
+        }
 
         // --- SECTION 3: SYSTEM SETTINGS ---
         drawString(20, startY, "SETTINGS & VIEW", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f); // Cyan header

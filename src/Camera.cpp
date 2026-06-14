@@ -1,3 +1,27 @@
+/*
+--------------------------------------------------
+Module: 3D Camera Controller
+
+Purpose:
+Manages camera tracking, orbit angles, zoom distance, and coordinate conversions
+for navigating around the 3D Rubik's Cube.
+
+Graphics Concepts:
+- 3D Viewing Transformation
+- Orbit Controls
+- Gimbal Lock Prevention
+
+Mathematics:
+- Spherical Coordinates (Theta, Phi, Radius)
+- Boundary clamping (phi in [-89, 89], theta in [0, 360])
+
+Responsibilities:
+- Orbiting camera azimuth and elevation angles
+- Zooming camera distance in and out
+- Applying the view transformations via applyCameraView()
+--------------------------------------------------
+*/
+
 #include "Camera.h"
 #include "algorithms/Algorithms.h"
 #include <cmath>

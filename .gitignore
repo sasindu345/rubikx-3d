@@ -30,4 +30,5 @@ compile_commands.json
 docs/
 
 .history
+.cache/
 

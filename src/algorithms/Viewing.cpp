@@ -1,15 +1,28 @@
-// ================================================
-// THEORY: 3D Viewing
-// LECTURE: 3D Viewing and Projection
-// ALGORITHM: Camera coordinates view and projection transformations
-// MATHEMATICS: Spherical coordinate frames and frustum definitions
-// FORMULA: 
-//   gluLookAt(cx, cy, cz, tx, ty, tz, ux, uy, uz)
-//   gluPerspective(fov, aspect, zNear, zFar)
-// USED BY: Camera.cpp, main.cpp, HUD.cpp
-// USER RESULT: Correct perspective rendering of the 3D scene and 2D HUD overlays.
-// RESPONSIBLE MEMBER: Member 2
-// ================================================
+/*
+--------------------------------------------------
+Module: 3D Viewing and Projections
+
+Purpose:
+Manages coordinate mappings and transformations from 3D world space
+to eye space, and configures perspective and orthographic projections.
+
+Graphics Concepts:
+- Viewing Transformation
+- Perspective Projection
+- Orthographic Projection
+
+Mathematics:
+- Spherical to Cartesian Coordinate Conversion
+- Projection Matrices
+- Aspect Ratio Calculations
+
+Responsibilities:
+- Defining the camera view matrix using Look-At matrices
+- Configuring perspective projections for the 3D puzzle view
+- Setting up flat orthographic coordinates for 2D UI overlays
+- Restoring projection state after rendering HUD
+--------------------------------------------------
+*/
 
 #include "Viewing.h"
 #include <cmath>

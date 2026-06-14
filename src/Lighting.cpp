@@ -1,17 +1,21 @@
-// ================================================
-// THEORY: Shading & Lighting
-// LECTURE: Visible Surface Detection and Shading
-// ALGORITHM: Phong Illumination Model (Diffuse + Specular)
-// MATHEMATICS:
-//   I = Ia * Ka  +  Id * Kd * (N . L)  +  Is * Ks * (R . V)^n
-//   where Ia/Id/Is = ambient/diffuse/specular light intensity
-//         Ka/Kd/Ks = material ambient/diffuse/specular coefficients
-//         N = surface normal, L = light direction, V = view direction
-//         R = reflected light direction, n = shininess exponent
-// USED BY: Renderer.cpp, main.cpp
-// USER RESULT: Realistic face reflections with dynamic orbiting light source.
-// RESPONSIBLE MEMBER: Member 2
-// ================================================
+/*
+--------------------------------------------------
+Module: Lighting System
+
+Theory: Shading & Lighting
+Lecture: Visible Surface Detection and Shading
+Algorithm: Phong Illumination Model (Diffuse + Specular)
+Mathematics:
+  I = Ia * Ka  +  Id * Kd * (N . L)  +  Is * Ks * (R . V)^n
+  where Ia/Id/Is = ambient/diffuse/specular light intensity
+        Ka/Kd/Ks = material ambient/diffuse/specular coefficients
+        N = surface normal, L = light direction, V = view direction
+        R = reflected light direction, n = shininess exponent
+Used by: Renderer.cpp, main.cpp
+User Result: Realistic face reflections with dynamic orbiting light source.
+Responsible Member: Member 2
+--------------------------------------------------
+*/
 
 #include "Lighting.h"
 #include <cmath>
