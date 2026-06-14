@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <cmath>
 #include <string>
 #include "cube/RubiksCube.h"
 #include "cube/CubeFactory.h"
@@ -50,6 +51,18 @@ bool showHelp = true;
 bool practiceMode = false;
 bool awaitingAlgInput = false;
 bool showStats = false;
+
+// ── Feature: Exploded Cube View ──────────────────────────────────
+// Controls how far cubies spread outward from the centre.
+// targetExplosion is set by keyboard; currentExplosion is interpolated.
+float targetExplosion = 0.0f;
+float currentExplosion = 0.0f;
+
+// ── Feature: Orbiting Point Light Source ─────────────────────────
+bool lightOrbitEnabled = false;
+float lightOrbitAngle = 0.0f;     // current angle in degrees
+float lightOrbitRadius = 12.0f;   // orbit distance from centre
+float lightOrbitSpeed = 45.0f;    // degrees per second
 
 // Move history tracker
 std::vector<Move> moveHistory;
@@ -114,6 +127,58 @@ bool isRightMouseDown = false;
 int lastMouseX = 0;
 int lastMouseY = 0;
 
+// ── Dynamic Procedural Background Gradient ───────────────────────
+// Renders a full-screen quad with per-vertex colours that are
+// linearly interpolated (Gouraud shading) by the fixed-function
+// pipeline. This produces a smooth cosmic gradient without any
+// texture overhead.
+//
+// Theory: Colour Interpolation / Gouraud Shading
+//   The GPU interpolates vertex colours across the polygon using
+//   barycentric coordinates, producing a smooth gradient:
+//     C(x,y) = alpha * C_v0 + beta * C_v1 + gamma * C_v2
+void drawBackgroundGradient(int width, int height) {
+    // Switch to 2D orthographic projection for the full-screen quad
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, width, height, 0); // origin top-left
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    // Disable depth/lighting — the gradient sits behind everything
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDepthMask(GL_FALSE);
+
+    glBegin(GL_QUADS);
+    // Top-left:  deep dark indigo
+    glColor3f(0.06f, 0.04f, 0.14f);
+    glVertex2i(0, 0);
+    // Top-right: dark midnight blue
+    glColor3f(0.04f, 0.08f, 0.18f);
+    glVertex2i(width, 0);
+    // Bottom-right: dark teal
+    glColor3f(0.03f, 0.12f, 0.16f);
+    glVertex2i(width, height);
+    // Bottom-left: very dark purple
+    glColor3f(0.08f, 0.04f, 0.12f);
+    glVertex2i(0, height);
+    glEnd();
+
+    // Restore state
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 // Display callback
 void display() {
     // Clear color and depth buffers
@@ -124,6 +189,9 @@ void display() {
         // (no 3D cube, no camera, no lighting)
         welcomeScreen.render(windowWidth, windowHeight);
     } else {
+        // ── Draw background gradient behind the 3D scene ──
+        drawBackgroundGradient(windowWidth, windowHeight);
+
         // Normal gameplay rendering
         // Reset modelview transformation
         glMatrixMode(GL_MODELVIEW);
@@ -133,13 +201,25 @@ void display() {
         camera.apply();
         
         // Position lighting in scene space
-        Lighting::apply();
+        if (lightOrbitEnabled) {
+            Lighting::apply(lightOrbitAngle, lightOrbitRadius);
+        } else {
+            Lighting::apply();
+        }
 
         // Sync alpha blending state with renderer before drawing
         renderer.alphaBlending = alphaBlendingEnabled;
+
+        // Sync explosion factor
+        renderer.explosionFactor = currentExplosion;
         
         // Render the Rubik's Cube with active animations
         renderer.renderCube(activeCube, animation);
+
+        // Render the visible light source indicator when orbiting
+        if (lightOrbitEnabled) {
+            Lighting::renderLightIndicator(lightOrbitAngle, lightOrbitRadius);
+        }
         
         // Render 2D HUD Help Menu overlay
         hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode));
@@ -532,6 +612,32 @@ void keyboard(unsigned char key, int x, int y) {
         case 'f': queueUserMove(Move(Face::FRONT, Direction::CCW, 0)); break;
         case 'b': queueUserMove(Move(Face::BACK, Direction::CCW, 0)); break;
 
+        // ── Exploded Cube View (E = expand, e = contract) ──
+        // Smoothly spreads cubies outward from the centre to reveal
+        // internal structure.  Uses translation matrix scaling.
+        case 'E':
+            targetExplosion += 0.15f;
+            if (targetExplosion > 1.5f) targetExplosion = 1.5f;
+            std::cout << "[Exploded View] Target expansion: " << targetExplosion << std::endl;
+            break;
+        case 'e':
+            targetExplosion -= 0.15f;
+            if (targetExplosion < 0.0f) targetExplosion = 0.0f;
+            std::cout << "[Exploded View] Target expansion: " << targetExplosion << std::endl;
+            break;
+
+        // ── Orbiting Point Light Source (K/k toggle) ──
+        // Toggles a dynamic light that orbits the cube, producing
+        // real-time specular highlight changes on each face.
+        case 'K':
+        case 'k':
+            lightOrbitEnabled = !lightOrbitEnabled;
+            std::cout << "[Orbiting Light] "
+                      << (lightOrbitEnabled ? "ON  (light orbiting cube)"
+                                           : "OFF (static lighting)")
+                      << std::endl;
+            break;
+
         default:
             std::cout << "Key pressed: " << key << " at mouse (" << x << ", " << y << ")" << std::endl;
             break;
@@ -740,6 +846,24 @@ void timer(int value) {
     }
 
     glutPostRedisplay();
+
+    // ── Animate Exploded View ──
+    // Smoothly interpolate currentExplosion toward targetExplosion
+    // using a simple exponential ease-out (LERP toward target).
+    if (std::fabs(currentExplosion - targetExplosion) > 0.001f) {
+        currentExplosion += (targetExplosion - currentExplosion) * 5.0f * deltaTime;
+    } else {
+        currentExplosion = targetExplosion;
+    }
+
+    // ── Animate Orbiting Light ──
+    // Advance the orbit angle each frame when enabled.
+    // The angle wraps at 360 degrees.
+    if (lightOrbitEnabled) {
+        lightOrbitAngle += lightOrbitSpeed * deltaTime;
+        if (lightOrbitAngle >= 360.0f) lightOrbitAngle -= 360.0f;
+    }
+
     glutTimerFunc(16, timer, 0); // queue next frame
 }
 
