@@ -1,16 +1,27 @@
-// ================================================
-// THEORY: 2D Viewing and Clipping
-// LECTURE: Line Clipping and Viewing Volumes
-// ALGORITHM: Cohen-Sutherland Line Clipping and Frustum bounds checks
-// MATHEMATICS: Outcode bitwise tests and frustum plane line intersections
-// FORMULA: 
-//   Outcodes: bit 0: Left, bit 1: Right, bit 2: Bottom, bit 3: Top
-//   Outcode0 AND Outcode1 != 0 => Trivial Reject
-//   Outcode0 OR Outcode1 == 0 => Trivial Accept
-// USED BY: HUD.cpp, main.cpp
-// USER RESULT: Correct raster boundaries mapping and volume culling.
-// RESPONSIBLE MEMBER: Member 5
-// ================================================
+/*
+--------------------------------------------------
+Module: Clipping and Viewport Configuration
+
+Purpose:
+Manages viewport scaling and clipping boundaries for 2D graphics overlays
+and validates 3D viewing frustum limits.
+
+Graphics Concepts:
+- 2D Window-To-Viewport Mapping
+- 2D Line Clipping
+- Viewing Volume Clipping (Near/Far Planes)
+
+Mathematics:
+- Cohen-Sutherland Boundary Outcode Bitwise Logic
+- Linear Interpolation for Line-Boundary Intersections
+- 3D Z-Depth Culling Inequalities
+
+Responsibilities:
+- Configuring window viewport size mapping
+- Checking depth coordinate constraints against clipping planes
+- Clipping 2D vectors using the Cohen-Sutherland algorithm
+--------------------------------------------------
+*/
 
 #include "Clipping.h"
 

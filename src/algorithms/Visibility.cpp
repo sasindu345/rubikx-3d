@@ -1,15 +1,27 @@
-// ================================================
-// THEORY: Visible Surface Detection
-// LECTURE: Visible Surface Detection and Shading
-// ALGORITHM: Back-Face Culling and Depth Testing (Z-Buffer)
-// MATHEMATICS: Normal vector dot products and polygon wind orientation tests
-// FORMULA: 
-//   Dot product N . V < 0  => Visible
-//   Dot product N . V >= 0 => Culled
-// USED BY: Renderer.cpp, main.cpp
-// USER RESULT: Correct occlusion sorting and exclusion of internal/back faces.
-// RESPONSIBLE MEMBER: Member 3
-// ================================================
+/*
+--------------------------------------------------
+Module: Visible Surface Detection
+
+Purpose:
+Determines surface visibility and performs occlusion culling to ensure
+correct rendering order and discard invisible geometries.
+
+Graphics Concepts:
+- Visible Surface Detection (VSD)
+- Back-Face Culling
+- Depth Testing (Z-Buffer)
+
+Mathematics:
+- Surface Normal Vectors
+- Eye View Vector Dot Products
+- Polygon Winding Order (CCW/CW)
+
+Responsibilities:
+- Enabling and configuring the depth buffer function (GL_LESS)
+- Enabling and configuring back-face culling (GL_CULL_FACE, GL_BACK)
+- Defining surface normals to support correct back-face detection
+--------------------------------------------------
+*/
 
 #include "Visibility.h"
 

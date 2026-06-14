@@ -1,3 +1,30 @@
+/*
+--------------------------------------------------
+Module: Welcome Screen System
+
+Purpose:
+Renders the initial welcome screen configuration board, allowing interactive
+selection of cube parameters (dimension size, style, colors, and preferences) before puzzle initialization.
+
+Graphics Concepts:
+- 2D Orthographic Projections
+- Disabling Depth Buffer / Lighting States
+- Option Cards and Focus Borders
+- Raster Font Text Alignment
+
+Mathematics:
+- Discretized View Coordinates
+- Horizontal/Vertical alignment geometry math
+- Selection focus grid coordinate indexing
+
+Responsibilities:
+- Rendering option boxes and highlighted focus frames
+- Setting up orthographic menu projections
+- Checking mouse clicks against button bounds (interactive click zones)
+- Handling keyboard control sequences for menu selection
+--------------------------------------------------
+*/
+
 #include "WelcomeScreen.h"
 #include "algorithms/Algorithms.h"
 #include <cstdio>

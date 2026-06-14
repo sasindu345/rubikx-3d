@@ -1,14 +1,23 @@
-// ================================================
-// THEORY: 2D Font Rasterization
-// LECTURE: Rasterization and Text Overlays
-// ALGORITHM: Character bitmap plotting
-// MATHEMATICS: Mapping coordinate matrices to bitmap pixel strides
-// FORMULA: 
-//   Pixel(x, y) = CharacterGlyphMap[char][pixel_index]
-// USED BY: HUD.cpp
-// USER RESULT: High-performance 2D font text drawing.
-// RESPONSIBLE MEMBER: Member 5
-// ================================================
+/*
+--------------------------------------------------
+Module: Font Rasterization
+
+Purpose:
+Draws bitmap font character arrays onto screen coordinates for text display.
+
+Graphics Concepts:
+- Bitmap Font Rasterization
+- Pixel-Aligned Screen Layouts
+
+Mathematics:
+- Coordinate mapping
+- Text-width horizontal step accumulation
+
+Responsibilities:
+- Rendering bitmap character strings at defined (x, y) coordinates
+- Setting custom color tracking for text elements
+--------------------------------------------------
+*/
 
 #include "Rasterization.h"
 

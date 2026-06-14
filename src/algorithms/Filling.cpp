@@ -1,14 +1,25 @@
-// ================================================
-// THEORY: Polygon and Area Filling
-// LECTURE: Area Filling and Rasterization
-// ALGORITHM: Scan Line Polygon Fill (GPU level rasterization)
-// MATHEMATICS: Linear interpolation of edge boundaries on screen grids
-// FORMULA: 
-//   Horizontal spans filled between sorted active edge pairs.
-// USED BY: HUD.cpp
-// USER RESULT: Solid background panels and border layouts.
-// RESPONSIBLE MEMBER: Member 3
-// ================================================
+/*
+--------------------------------------------------
+Module: Polygon and Area Filling
+
+Purpose:
+Provides rasterization utilities for drawing solid filled panels and borders
+for 2D dashboard elements.
+
+Graphics Concepts:
+- Area Filling
+- Scan-Line Polygon Fill (simulated via primitive drawing)
+- Border / Edge Outline Tracing
+
+Mathematics:
+- Interpolation of bounding points on screen grids
+- View coordinate discretization
+
+Responsibilities:
+- Rasterizing filled quadrilaterals for transparent and solid panels
+- Rasterizing loops for border layouts
+--------------------------------------------------
+*/
 
 #include "Filling.h"
 

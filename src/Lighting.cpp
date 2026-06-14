@@ -1,3 +1,28 @@
+/*
+--------------------------------------------------
+Module: Lighting System
+
+Purpose:
+Configures three-dimensional light sources and material reflection attributes
+to render realistic plastic glossy surfaces for the cube.
+
+Graphics Concepts:
+- Illumination Models
+- Key Light / Fill Light Positioning
+- Material Specular and Shininess Reflections
+- Color Tracking (GL_COLOR_MATERIAL)
+
+Mathematics:
+- Direction Vectors for Light Coordinates
+- Diffuse, Specular, and Ambient Reflection Coefficients
+
+Responsibilities:
+- Initializing light parameters (GL_LIGHT0, GL_LIGHT1)
+- Position lights dynamically within eye space
+- Configuring material specular highlights
+--------------------------------------------------
+*/
+
 #include "Lighting.h"
 
 #ifdef __APPLE__

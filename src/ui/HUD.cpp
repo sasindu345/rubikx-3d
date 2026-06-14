@@ -1,3 +1,30 @@
+/*
+--------------------------------------------------
+Module: Head-Up Display (HUD) System
+
+Purpose:
+Renders 2D graphical overlay interface widgets, menus, solve metrics, status badges,
+and move sequence playback indicators on top of the 3D viewport canvas.
+
+Graphics Concepts:
+- 2D Orthographic Projections
+- Disabling Depth Buffer / Lighting States
+- Layered UI Panels (Glassmorphic Translucent Cards)
+- Raster Font Text Alignment
+
+Mathematics:
+- Discretized View Coordinates
+- Centering offsets and viewport margins
+- Bitwise UI column slot calculation algorithms
+
+Responsibilities:
+- Setting up orthographic overlay viewport projections
+- Rasterizing background cards and colored layout borders
+- Formatting and printing text metrics (elapsed time, score, move counter)
+- Displaying active solution playback history tape indicators
+--------------------------------------------------
+*/
+
 #include "HUD.h"
 #include "algorithms/Algorithms.h"
 #include <cstdio>
