@@ -26,4 +26,7 @@ public:
 
     // Renders the stats panel showing Ao5, Ao12, and totals
     void renderStatsPanel(int width, int height, const ScoreManager& scoreManager, int cubeSize);
+
+    // Renders an orange armed-layer status banner at the bottom-left when pendingLayer != -1
+    void renderPendingLayerStatus(int width, int height, int pendingLayer);
 };

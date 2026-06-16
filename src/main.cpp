@@ -67,6 +67,9 @@ float lightOrbitSpeed = 45.0f;    // degrees per second
 std::vector<Move> moveHistory;
 std::vector<Move> lastScramble;
 
+// Pending inner-layer state machine (-1 = none armed)
+int pendingLayer = -1;
+
 void queueUserMove(const Move& m) {
     // Clear any active solver playback when user manually rotates a face
     solutionPlayer.setMoves({});
@@ -85,6 +88,21 @@ void queueUserMove(const Move& m) {
     }
     
     animation.queueMove(m);
+}
+
+void queueWholeRotation(Face face, Direction dir) {
+    for (int layer = 0; layer < activeCube.getSize(); ++layer) {
+        queueUserMove(Move(face, dir, layer));
+    }
+}
+
+// Wide move: queue outer layer (0) + inner layer (1) together.
+// Guards against cubes where layer 1 does not exist (2x2).
+void queueWideMove(Face face, Direction dir) {
+    queueUserMove(Move(face, dir, 0));
+    if (activeCube.getSize() > 2) {
+        queueUserMove(Move(face, dir, 1));
+    }
 }
 
 void applyPattern(int index) {
@@ -171,6 +189,9 @@ void display() {
         // Render scoring panel (top-right): live timer/move counter or last result
         hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
 
+        // Render pending layer status banner (bottom-left, only when armed)
+        hud.renderPendingLayerStatus(windowWidth, windowHeight, pendingLayer);
+
         if (showStats) {
             hud.renderStatsPanel(windowWidth, windowHeight, scoreManager, activeCube.getSize());
         }
@@ -234,8 +255,65 @@ void keyboard(unsigned char key, int x, int y) {
         return;
     }
 
+    // Read modifier keys for Ctrl/Alt detection before the switch
+    int modifiers = glutGetModifiers();
+    bool ctrlHeld  = (modifiers & GLUT_ACTIVE_CTRL)  != 0;
+    bool altHeld   = (modifiers & GLUT_ACTIVE_ALT)   != 0;
+    bool shiftHeld = (modifiers & GLUT_ACTIVE_SHIFT) != 0;
+
+    // ── Alt + digit: arm a pending inner layer ───────────────────────────────
+    // Alt+2 = layer 1, Alt+3 = layer 2, ..., Alt+7 = layer 6 (0-based)
+    if (altHeld && key >= '2' && key <= '7') {
+        int requestedLayer = (key - '0') - 1; // '2'->1, '3'->2, etc.
+        if (requestedLayer >= activeCube.getSize()) {
+            std::cout << "[Inner Layer] Layer " << (requestedLayer + 1)
+                      << " does not exist on a "
+                      << activeCube.getSize() << "x" << activeCube.getSize()
+                      << " cube. Cancelled." << std::endl;
+            pendingLayer = -1;
+        } else {
+            pendingLayer = requestedLayer;
+            std::cout << "[Inner Layer] Layer " << (pendingLayer + 1)
+                      << " armed — press a face key (R/L/U/D/F/B)." << std::endl;
+        }
+        glutPostRedisplay();
+        return;
+    }
+
+    // ── Ctrl combos: wide moves (outer + layer 1 together) ───────────────────
+    // Ctrl+R=18, Ctrl+L=12, Ctrl+U=21, Ctrl+D=4, Ctrl+F=6, Ctrl+B=2
+    // Shift+Ctrl gives the CCW (prime) variant.
+    if (ctrlHeld) {
+        Direction wideDir = shiftHeld ? Direction::CCW : Direction::CW;
+        switch (key) {
+            case 18: queueWideMove(Face::RIGHT, wideDir); pendingLayer = -1; glutPostRedisplay(); return; // Ctrl+R
+            case 12: queueWideMove(Face::LEFT,  wideDir); pendingLayer = -1; glutPostRedisplay(); return; // Ctrl+L
+            case 21: queueWideMove(Face::UP,    wideDir); pendingLayer = -1; glutPostRedisplay(); return; // Ctrl+U
+            case  4: queueWideMove(Face::DOWN,  wideDir); pendingLayer = -1; glutPostRedisplay(); return; // Ctrl+D
+            case  6: queueWideMove(Face::FRONT, wideDir); pendingLayer = -1; glutPostRedisplay(); return; // Ctrl+F
+            case  2: queueWideMove(Face::BACK,  wideDir); pendingLayer = -1; glutPostRedisplay(); return; // Ctrl+B
+            default: break;
+        }
+    }
+
+    // ── Face-move helper lambdas (respect pending inner layer) ─────────────
+    // If a layer was armed via Alt+digit, use it; otherwise use layer 0.
+    auto queueFaceCW = [&](Face face) {
+        int lay = (pendingLayer >= 0 && pendingLayer < activeCube.getSize()) ? pendingLayer : 0;
+        queueUserMove(Move(face, Direction::CW, lay));
+        pendingLayer = -1;
+        glutPostRedisplay();
+    };
+    auto queueFaceCCW = [&](Face face) {
+        int lay = (pendingLayer >= 0 && pendingLayer < activeCube.getSize()) ? pendingLayer : 0;
+        queueUserMove(Move(face, Direction::CCW, lay));
+        pendingLayer = -1;
+        glutPostRedisplay();
+    };
+
     switch (key) {
-        case 27: // Escape key
+        case 27: // Escape key — also cancels any pending layer
+            pendingLayer = -1;
             std::cout << "Exiting application." << std::endl;
             exit(0);
             break;
@@ -516,21 +594,59 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
 
-        // Clockwise moves (Capital letters)
-        case 'R': queueUserMove(Move(Face::RIGHT, Direction::CW, 0)); break;
-        case 'L': queueUserMove(Move(Face::LEFT, Direction::CW, 0)); break;
-        case 'U': queueUserMove(Move(Face::UP, Direction::CW, 0)); break;
-        case 'D': queueUserMove(Move(Face::DOWN, Direction::CW, 0)); break;
-        case 'F': queueUserMove(Move(Face::FRONT, Direction::CW, 0)); break;
-        case 'B': queueUserMove(Move(Face::BACK, Direction::CW, 0)); break;
+        // ── Outer face moves — with pending-layer override ───────────────────
+        // CW (uppercase) and CCW (lowercase) both route through the lambdas
+        // defined above the switch so the armed layer (if any) is respected.
+        case 'R': queueFaceCW(Face::RIGHT);  break;
+        case 'L': queueFaceCW(Face::LEFT);   break;
+        case 'U': queueFaceCW(Face::UP);     break;
+        case 'D': queueFaceCW(Face::DOWN);   break;
+        case 'F': queueFaceCW(Face::FRONT);  break;
+        case 'B': queueFaceCW(Face::BACK);   break;
 
         // Counter-Clockwise moves (Lowercase letters)
-        case 'r': queueUserMove(Move(Face::RIGHT, Direction::CCW, 0)); break;
-        case 'l': queueUserMove(Move(Face::LEFT, Direction::CCW, 0)); break;
-        case 'u': queueUserMove(Move(Face::UP, Direction::CCW, 0)); break;
-        case 'd': queueUserMove(Move(Face::DOWN, Direction::CCW, 0)); break;
-        case 'f': queueUserMove(Move(Face::FRONT, Direction::CCW, 0)); break;
-        case 'b': queueUserMove(Move(Face::BACK, Direction::CCW, 0)); break;
+        case 'r': queueFaceCCW(Face::RIGHT); break;
+        case 'l': queueFaceCCW(Face::LEFT);  break;
+        case 'u': queueFaceCCW(Face::UP);    break;
+        case 'd': queueFaceCCW(Face::DOWN);  break;
+        case 'f': queueFaceCCW(Face::FRONT); break;
+        case 'b': queueFaceCCW(Face::BACK);  break;
+
+        // ── Slice moves (middle layer only) ──────────────────────────────────
+        // M slice (middle layer, L-axis): J=CW / j=CCW  (M/m taken by Practice Mode)
+        case 'J': queueUserMove(Move(Face::LEFT,  Direction::CW,  activeCube.getSize() / 2)); break;
+        case 'j': queueUserMove(Move(Face::LEFT,  Direction::CCW, activeCube.getSize() / 2)); break;
+        // E slice (middle layer, D-axis): G=CW / g=CCW  (E/e taken by Exploded View)
+        case 'G': queueUserMove(Move(Face::DOWN,  Direction::CW,  activeCube.getSize() / 2)); break;
+        case 'g': queueUserMove(Move(Face::DOWN,  Direction::CCW, activeCube.getSize() / 2)); break;
+        // S slice (middle layer, F-axis): N=CW / n=CCW  (S/s taken by Scramble)
+        case 'N': queueUserMove(Move(Face::FRONT, Direction::CW,  activeCube.getSize() / 2)); break;
+        case 'n': queueUserMove(Move(Face::FRONT, Direction::CCW, activeCube.getSize() / 2)); break;
+
+        // ── Wide moves (layers 0 + 1 together) ───────────────────────────────
+        // Rw: A=CW / a=CCW  (]/[ taken by X-rotation)
+        case 'A': queueWideMove(Face::RIGHT, Direction::CW);  break;
+        case 'a': queueWideMove(Face::RIGHT, Direction::CCW); break;
+        // Lw: Q=CW / q=CCW
+        case 'Q': queueWideMove(Face::LEFT,  Direction::CW);  break;
+        case 'q': queueWideMove(Face::LEFT,  Direction::CCW); break;
+        // Uw: V=CW / v=CCW  (;/' taken by Y-rotation)
+        case 'V': queueWideMove(Face::UP,    Direction::CW);  break;
+        case 'v': queueWideMove(Face::UP,    Direction::CCW); break;
+        // Dw: `=CW / ~=CCW  (/ taken by Z-rot CCW, . taken by step-fwd)
+        case '`': queueWideMove(Face::DOWN,  Direction::CW);  break;
+        case '~': queueWideMove(Face::DOWN,  Direction::CCW); break;
+
+        // ── Whole-cube rotations (all layers) ────────────────────────────────
+        // X (all layers on R): [=CW / ]=CCW
+        case '[': queueWholeRotation(Face::RIGHT, Direction::CW);  break;
+        case ']': queueWholeRotation(Face::RIGHT, Direction::CCW); break;
+        // Y (all layers on U): ;=CW / '=CCW
+        case ';': queueWholeRotation(Face::UP,    Direction::CW);  break;
+        case 39:  queueWholeRotation(Face::UP,    Direction::CCW); break; // 39 = apostrophe '
+        // Z (all layers on F): \=CW / /=CCW
+        case 92:  queueWholeRotation(Face::FRONT, Direction::CW);  break; // 92 = backslash
+        case '/': queueWholeRotation(Face::FRONT, Direction::CCW); break;
 
         // ── Exploded Cube View (E = expand, e = contract) ──
         // Smoothly spreads cubies outward from the centre to reveal
@@ -559,7 +675,15 @@ void keyboard(unsigned char key, int x, int y) {
             break;
 
         default:
-            std::cout << "Key pressed: " << key << " at mouse (" << x << ", " << y << ")" << std::endl;
+            // Any unhandled key cancels a pending layer arm
+            if (pendingLayer != -1) {
+                std::cout << "[Inner Layer] Pending layer " << (pendingLayer + 1)
+                          << " cancelled (unrecognised key)." << std::endl;
+                pendingLayer = -1;
+                glutPostRedisplay();
+            } else {
+                std::cout << "Key pressed: " << key << " at mouse (" << x << ", " << y << ")" << std::endl;
+            }
             break;
     }
 }
