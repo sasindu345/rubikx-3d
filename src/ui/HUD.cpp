@@ -95,43 +95,77 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
 
         draw2Col(20, startY, "R / r", "Right");  draw2Col(135, startY, "D / d", "Down");  startY += lineSpacing;
         draw2Col(20, startY, "L / l", "Left");   draw2Col(135, startY, "F / f", "Front"); startY += lineSpacing;
-        draw2Col(20, startY, "U / u", "Up");     draw2Col(135, startY, "B / b", "Back");  startY += 28;
+        draw2Col(20, startY, "U / u", "Up");     draw2Col(135, startY, "B / b", "Back");  startY += 24;
+
+        drawString(20, startY, "WIDE MOVES (Ctrl+face)", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
+        drawControlLine(20, startY, "^R / ^SR", "Rw / Rw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "^L / ^SL", "Lw / Lw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "^U / ^SU", "Uw / Uw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "^D / ^SD", "Dw / Dw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "^F / ^SF", "Fw / Fw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "^B / ^SB", "Bw / Bw'", GLUT_BITMAP_8_BY_13); startY += 24;
+
+        drawString(20, startY, "INNER LAYER (Alt+dig,face)", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
+        drawControlLine(20, startY, "Alt+2..7", "Arm layer 2..7", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "then R/r..", "Apply CW/CCW", GLUT_BITMAP_8_BY_13); startY += 24;
+
+        drawString(20, startY, "SLICE MOVES", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
+        drawControlLine(20, startY, "J / j", "M-slice (L-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "G / g", "E-slice (D-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "N / n", "S-slice (F-axis)", GLUT_BITMAP_8_BY_13); startY += 24;
+
+        drawString(20, startY, "CUBE ROTATIONS", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
+        drawControlLine(20, startY, "[ / ]", "x / x' (R-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "; / '", "y / y' (U-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(20, startY, "\\ / /", "z / z' (F-axis)", GLUT_BITMAP_8_BY_13); startY += 32;
+
+        // Camera hint (left panel bottom)
+        drawString(20, startY, "Drag Mouse / Arrow Keys to Rotate camera", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+
+        // --- RIGHT PANEL FOR ACTIONS & SETTINGS ---
+        int rightPanelW = 270;
+        int rightX = width - rightPanelW;
+        int rightStartY = 210; // Start safely below the score panel
+
+        // Draw background for right panel starting from rightStartY - 10
+        drawPanel(rightX, rightStartY - 10, rightPanelW, height - (rightStartY - 10), 0.08f, 0.08f, 0.1f, 0.85f);
+        // Draw glowing left border
+        drawPanel(rightX, rightStartY - 10, 2, height - (rightStartY - 10), 0.2f, 0.4f, 0.6f, 0.6f);
+
+        int rx = rightX + 20;
 
         // --- SECTION 2: GAME ACTIONS ---
-        drawString(20, startY, "GAME ACTIONS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f); // Orange header
-        drawPanel(20, startY + 4, 110, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        startY += 20;
+        drawString(rx, rightStartY, "GAME ACTIONS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f); // Orange header
+        drawPanel(rx, rightStartY + 4, 110, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+        rightStartY += 20;
 
-        drawControlLine(20, startY, "S", "Scramble Cube", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Z", "Auto-Solve", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "X", "Reset solved state", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Y", "Retry last scramble", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+        drawControlLine(rx, rightStartY, "S", "Scramble Cube", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "Z", "Auto-Solve", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "X", "Reset solved state", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "Y", "Retry last scramble", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
         if (cubeSize == 2) {
-            drawControlLine(20, startY, "!,@", "Apply Patterns 2x2", GLUT_BITMAP_8_BY_13); startY += 28;
+            drawControlLine(rx, rightStartY, "!,@", "Apply Patterns 2x2", GLUT_BITMAP_8_BY_13); rightStartY += 28;
         } else {
-            drawControlLine(20, startY, "!,@,#", "Apply Patterns " + std::to_string(cubeSize) + "x" + std::to_string(cubeSize), GLUT_BITMAP_8_BY_13); startY += 28;
+            drawControlLine(rx, rightStartY, "!,@,#", "Apply Patterns " + std::to_string(cubeSize) + "x" + std::to_string(cubeSize), GLUT_BITMAP_8_BY_13); rightStartY += 28;
         }
 
         // --- SECTION 3: SYSTEM SETTINGS ---
-        drawString(20, startY, "SETTINGS & VIEW", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f); // Cyan header
-        drawPanel(20, startY + 4, 130, 1, 0.0f, 0.8f, 1.0f, 0.5f);
-        startY += 20;
+        drawString(rx, rightStartY, "SETTINGS & VIEW", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f); // Cyan header
+        drawPanel(rx, rightStartY + 4, 130, 1, 0.0f, 0.8f, 1.0f, 0.5f);
+        rightStartY += 20;
 
-        drawControlLine(20, startY, "O", "Setup Menu (Start)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "2 - 7", "Switch Cube Size", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "C", "Cycle Color Schemes", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "T", "Toggle Glass Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "W", "Toggle Render Style", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "E / e", "Explode / Contract", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "K", "Toggle Orbiting Light", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "M", "Toggle Practice Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Space", "Pause/Resume Timer", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "I", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "H", "Toggle HUD overlay", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "Esc", "Exit Application", GLUT_BITMAP_8_BY_13); startY += 22;
-
-        // Camera hint
-        drawString(20, startY, "Drag Mouse / Arrow Keys to Rotate camera", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+        drawControlLine(rx, rightStartY, "O", "Setup Menu (Start)", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "2 - 7", "Switch Cube Size", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "C", "Cycle Color Schemes", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "T", "Toggle Glass Mode", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "W", "Toggle Render Style", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "E / e", "Explode / Contract", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "K", "Toggle Orbiting Light", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "M", "Toggle Practice Mode", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "Space", "Pause/Resume Timer", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "I", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "H", "Toggle HUD overlay", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+        drawControlLine(rx, rightStartY, "Esc", "Exit Application", GLUT_BITMAP_8_BY_13); rightStartY += 22;
     } else {
         // Simple minimized HUD banner at top-left
         drawPanel(10, 10, 190, 30, 0.08f, 0.08f, 0.1f, 0.75f);
@@ -449,5 +483,42 @@ void HUD::renderStatsPanel(int width, int height, const ScoreManager& scoreManag
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
 
+    restoreProjection();
+}
+
+void HUD::renderPendingLayerStatus(int width, int height, int pendingLayer) {
+    if (pendingLayer < 0) return; // Nothing armed — don't draw anything
+
+    setupOrthographicProjection(width, height);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Build the message string
+    char msg[64];
+    snprintf(msg, sizeof(msg), "  Layer %d armed — press face key (R/L/U/D/F/B)  ", pendingLayer + 1);
+
+    // Bottom-left banner, above the very bottom edge
+    int bannerW = 310;
+    int bannerH = 30;
+    int bannerX = 10;
+    int bannerY = height - bannerH - 10;
+
+    // Dark orange-tinted background
+    rasterizeQuad(bannerX, bannerY, bannerX + bannerW, bannerY,
+                  bannerX + bannerW, bannerY + bannerH, bannerX, bannerY + bannerH,
+                  0.25f, 0.12f, 0.0f, 0.92f);
+    // Bright orange border
+    rasterizeBorder(bannerX, bannerY, bannerX + bannerW, bannerY,
+                    bannerX + bannerW, bannerY + bannerH, bannerX, bannerY + bannerH,
+                    1.0f, 0.55f, 0.0f, 1.0f, 1.5f);
+
+    // Orange text
+    rasterizeFont(bannerX + 8, bannerY + 20, msg, GLUT_BITMAP_8_BY_13, 1.0f, 0.75f, 0.2f);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
     restoreProjection();
 }
