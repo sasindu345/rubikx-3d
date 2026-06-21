@@ -151,150 +151,30 @@ The main keyboard controls are organized by category and displayed in the left H
 
 ---
 
-#### 1. Cube Moves
+#### 1. Game Actions
 
-RubikX-3D supports the **complete standard Rubik's Cube notation** across all cube sizes (2x2 through 7x7). Every move type that the auto-solver generates can also be executed manually via keyboard.
-
----
-
-##### 1a. Outer Face Moves (CW / CCW)
-
-Rotate the single outermost layer of a face. **Uppercase** = Clockwise, **Lowercase** = Counter-Clockwise.
-
-| Move | Key (CW) | Key (CCW) | Face |
-|:----:|:--------:|:---------:|------|
-| R / R' | `R` | `r` | Right face |
-| L / L' | `L` | `l` | Left face |
-| U / U' | `U` | `u` | Up face |
-| D / D' | `D` | `d` | Down face |
-| F / F' | `F` | `f` | Front face |
-| B / B' | `B` | `b` | Back face |
-
-> These 6 moves and their inverses are mathematically sufficient to solve any NxN cube. Every scrambled state reachable on a 2x2 through 7x7 can be solved using only combinations of R, L, U, D, F, and B.
-
----
-
-##### 1b. Double Moves (180° rotation)
-
-A double move rotates a face 180° — equivalent to pressing the face key twice in a row.
-
-| Move | Keys |
-|:----:|------|
-| R2 | `R` `R` |
-| U2 | `U` `U` |
-| F2 | `F` `F` |
-| *(any face)* 2 | Press that face key twice consecutively |
-
----
-
-##### 1c. Wide Moves — Outer + Inner Layer Together (3x3 and above)
-
-Wide moves rotate the outermost layer **and the layer immediately inside it** simultaneously. In standard notation, wide moves are written as lowercase letters (`r`, `u`, `f` etc.) or with a `w` suffix (`Rw`, `Uw`).
-
-Hold `Ctrl` with the face key for CW. Add `Shift` for CCW.
-
-| Move | Key (CW) | Key (CCW) | Equivalent notation |
-|:----:|:--------:|:---------:|---------------------|
-| Rw / Rw' | `Ctrl+R` | `Ctrl+Shift+R` | r / r' |
-| Lw / Lw' | `Ctrl+L` | `Ctrl+Shift+L` | l / l' |
-| Uw / Uw' | `Ctrl+U` | `Ctrl+Shift+U` | u / u' |
-| Dw / Dw' | `Ctrl+D` | `Ctrl+Shift+D` | d / d' |
-| Fw / Fw' | `Ctrl+F` | `Ctrl+Shift+F` | f / f' |
-| Bw / Bw' | `Ctrl+B` | `Ctrl+Shift+B` | b / b' |
-
-> Wide moves are skipped automatically on 2x2 cubes since there is no inner layer to include.
-
----
-
-##### 1d. Inner Layer Moves — Targeted Deep Slices (4x4 and above)
-
-For large cubes (4x4 through 7x7), specific inner layers can be targeted using the **two-step layer arm system**:
-
-**Step 1 — Arm the layer:** Hold `Alt` and press a digit (`2` through `7`) matching the layer number counting from the outside in. The HUD will display an orange banner confirming the armed layer.
-
-**Step 2 — Fire the move:** Press any face key to rotate that specific layer. Uppercase = CW, Lowercase = CCW. The armed layer resets automatically after the move.
-
-| Layer notation | Key sequence (CW) | Key sequence (CCW) | Works on |
-|:--------------:|:-----------------:|:------------------:|----------|
-| 2R / 2R' | `Alt+2` → `R` | `Alt+2` → `r` | 3x3–7x7 |
-| 3L / 3L' | `Alt+3` → `L` | `Alt+3` → `l` | 4x4–7x7 |
-| 4D / 4D' | `Alt+4` → `D` | `Alt+4` → `d` | 5x5–7x7 |
-| 5U / 5U' | `Alt+5` → `U` | `Alt+5` → `u` | 6x6–7x7 |
-| 6F / 6F' | `Alt+6` → `F` | `Alt+6` → `f` | 7x7 only |
-| *(any N + face)* | `Alt+N` → face key | `Alt+N` → lowercase | N ≤ cube size |
-
-> If the armed layer number is greater than or equal to the current cube size, the move is cancelled and a warning is printed to the console.
-
-> Pressing any non-face key (e.g. `Esc`, `Space`, digit) while a layer is armed will cancel the arm without executing a move.
-
----
-
-##### 1e. Slice Moves — True Middle Layer (odd-sized cubes: 3x3, 5x5, 7x7)
-
-Slice moves rotate the exact centre layer of the cube. They only have a meaningful effect on odd-sized cubes where a true middle layer exists.
-
-| Move | Key (CW) | Key (CCW) | Axis |
-|:----:|:--------:|:---------:|------|
-| M / M' | `J` | `j` | Between L and R faces |
-| E / E' | `G` | `g` | Between U and D faces |
-| S / S' | `N` | `n` | Between F and B faces |
-
-> `S`, `M`, and `E` keys are unavailable (already bound to Scramble, and reserved system keys), so `J`/`G`/`N` are used as conflict-free alternatives.
-
----
-
-##### 1f. Whole-Cube Rotations
-
-These rotate the **entire cube** in space without changing its scramble state. Useful for viewing the cube from a different angle or executing algorithms from a different orientation.
-
-| Rotation | Key (CW) | Key (CCW) | Axis |
-|:--------:|:--------:|:---------:|------|
-| x / x' | `[` | `]` | R-axis (follows Right face) |
-| y / y' | `;` | `'` | U-axis (follows Up face) |
-| z / z' | `\` | `/` | F-axis (follows Front face) |
-
----
-
-##### Move notation quick-reference summary
-
-| Category | Key pattern | Example |
-|----------|-------------|---------|
-| Outer CW | Uppercase letter | `R` |
-| Outer CCW | Lowercase letter | `r` |
-| Double (180°) | Same key twice | `R` `R` |
-| Wide CW | `Ctrl` + uppercase | `Ctrl+U` |
-| Wide CCW | `Ctrl+Shift` + uppercase | `Ctrl+Shift+U` |
-| Inner layer CW | `Alt+digit` → uppercase | `Alt+3` → `L` |
-| Inner layer CCW | `Alt+digit` → lowercase | `Alt+3` → `l` |
-| Slice CW | `J` / `G` / `N` | `J` (M move) |
-| Slice CCW | `j` / `g` / `n` | `j` (M' move) |
-| Cube rotation CW | `[` / `;` / `\` | `[` (x rotation) |
-| Cube rotation CCW | `]` / `'` / `/` | `]` (x' rotation) |
-
----
-
-#### 2. Game Actions
-
-* `S` / `s`: Scramble the cube randomly (move sequence scaled based on dimension)
-* `Z` / `z`: Auto-solve the current cube state (populates solution steps)
-* `X` / `x`: Reset cube instantly to solved state
+* `S` / `s`: Scramble the cube randomly (scramble moves scale based on cube size)
+* `Z` / `z`: Auto-solve the current cube state (calculates and populates solution steps)
+* `X` / `x`: Reset the cube instantly to the solved state
 * `Y` / `y`: Retry the last generated scramble sequence
-* `!` / `@` / `#`: Apply standard patterns to the cube (Checkerboard on all sizes, Superflip on >= 3, Cube-in-Cube on >= 2)
+* `!` / `@` / `#`: Apply preset patterns to the cube (Checkerboard on all sizes, Superflip on 3x3+, Cube-in-Cube on 2x2+)
 
-#### 3. Settings & View
+#### 2. Settings & View
 
-* `O` / `o` / `0`: Open Setup / Welcome Menu screen
+* `O` / `o` / `0`: Open Setup / Welcome Menu configuration screen
 * `2` – `7`: Switch Cube Size dynamically (from 2x2x2 up to 7x7x7)
 * `C` / `c`: Cycle sticker color schemes (Classic, Pastel, High Contrast)
-* `T` / `t`: Toggle Glass Mode (semi-transparent acrylic cubies)
-* `W` / `w`: Toggle Render Style (Solid rendering, Wireframe rendering, Textured stickers)
-* `M` / `m`: Toggle Practice Mode (timer continues, but score updates/history won't save)
-* `Space`: Pause / Resume timer
-* `I` / `i`: Toggle Session Stats Panel display (top-right overlay)
-* `H` / `h`: Toggle HUD help overlay visibility (left panel)
+* `T` / `t`: Toggle Glass Mode (semi-transparent acrylic rendering)
+* `W` / `w`: Toggle Render Style (Solid, Wireframe, or Textured stickers)
+* `E` / `e`: Explode / Contract cube structure (reveal internal layers)
+* `K` / `k`: Toggle orbiting light source
+* `M` / `m`: Toggle Practice Mode (live timer, but solves/scores are not saved)
+* `Space`: Pause / Resume live timer
+* `I` / `i`: Toggle Session Stats Panel visibility (Ao5, Ao12, solve history)
+* `H` / `h`: Toggle HUD help overlay visibility (left/right side panels)
 * `Esc`: Exit application
 
-#### 4. Solution Player Controls
+#### 3. Solution Player Controls
 
 When a solution is active (computed by pressing `Z`):
 
@@ -306,9 +186,25 @@ When a solution is active (computed by pressing `Z`):
 
 ### Mouse Interaction
 
-* **Orbit Camera:** Click and drag using the **Left Mouse Button**.
+* **Orbit Camera:** Click and drag using the **Left Mouse Button** (in normal gameplay, or in Solve Mode when no modifier key is held).
 * **Zoom View:** Scroll using the **Mouse Wheel** to zoom in or out.
 * **Select Options:** Click options on the welcome setup grid directly.
+
+---
+
+### 🧩 Interactive Solve Mode
+
+Press `Tab` to enter or exit Solve Mode. This mode is designed for easy, mouse-assisted layer rotations:
+
+* **Layer Selection:** Hold `Ctrl` or `Shift` and **Click** on any cubie on any of the 6 faces. 
+  - *Trackpad Compatibility:* Supports both Left and Right clicks to ensure seamless operation on Mac and Windows touchpads.
+  - *Dynamic Face Projection:* Automatically resolves the clicked column along either the X-axis (`ix`) or Z-axis (`iz`) based on which face is clicked.
+* **Switch Rotation Axis:** Press `H` to select the Horizontal axis, or `V` to select the Vertical axis.
+* **Clear Selection:** Press `C` to clear all selected layers.
+* **Horizontal Slice Rotation:** Press `A` (Rotate Left / CCW) or `D` (Rotate Right / CW).
+* **Vertical Slice Rotation:** Press `W` (Rotate Up) or `S` (Rotate Down).
+* **Camera Orbit:** Click and drag the mouse **without holding any modifier key** (Ctrl/Shift/Alt).
+* **Solver Status Panel:** Displays the selected axis, selected layer numbers, and help indicators in the bottom-left corner of the screen.
 
 ---
 
@@ -319,6 +215,6 @@ This system implements key computer graphics concepts directly using OpenGL fixe
 * **3D Transformations:** Local and global matrices are computed dynamically to rotate subsets of Cubies around specific axes (`glMultMatrixf`, `glRotatef`, `glTranslatef`).
 * **3D Viewing & Projections:** Features a perspective camera (`gluLookAt` and `gluPerspective`) combined with orthographic overlays (`glOrtho`) for rendering the HUD and menus.
 * **Visible Surface Detection:** Implements back-face culling (`glEnable(GL_CULL_FACE)`) and Z-buffering depth tests (`glEnable(GL_DEPTH_TEST)`) to maximize performance.
-* **Alpha Compositing:** Implements Glass Cube mode using `glEnable(GL_BLEND)` with source/destination blending factors (`glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)`).
+* **Alpha Compositing:** Implements Glass Cube mode and Interactive Solve Mode's "Ghost Cube" rendering using CPU-side back-to-front sorting (Painter's algorithm) combined with GPU-side alpha blending (`glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)`).
 * **Clipping:** Uses near and far clipping planes defined in the viewing volume to clip objects outside the viewport boundaries.
 * **Shading & Lighting:** Implements two-point specular and diffuse lighting models for realistic face reflections.
