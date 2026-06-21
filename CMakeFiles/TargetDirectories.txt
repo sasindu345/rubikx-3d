@@ -1,0 +1,3 @@
+/Users/oneionei/MyProjects/rubbicx/rubikx-3d/CMakeFiles/RubikX3D.dir
+/Users/oneionei/MyProjects/rubbicx/rubikx-3d/CMakeFiles/edit_cache.dir
+/Users/oneionei/MyProjects/rubbicx/rubikx-3d/CMakeFiles/rebuild_cache.dir

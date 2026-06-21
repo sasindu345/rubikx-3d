@@ -9,10 +9,15 @@ enum class RenderMode {
     TEXTURED
 };
 
+class SolveMode;
+
 class Renderer {
 public:
     Renderer();
     ~Renderer();
+
+    // Solve Mode pointer for layer highlight rendering
+    SolveMode* solveMode = nullptr;
 
     // Alpha Blending / Glass Cube mode toggle
     // When true: cubie bases are semi-transparent (glass effect), stickers remain opaque

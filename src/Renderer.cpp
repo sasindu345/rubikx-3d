@@ -29,6 +29,7 @@ Responsibilities:
 #include "Renderer.h"
 #include "Animation.h"
 #include "algorithms/Transformations.h"
+#include "ui/SolveMode.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -321,6 +322,128 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
         transforms.push_back(d);
     }
 
+    auto drawHighlightPass = [&]() {
+        if (solveMode && solveMode->isActive() && solveMode->hasSelection()) {
+            glDisable(GL_LIGHTING);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE); // Additive blending for glow
+            glDepthMask(GL_FALSE);
+            
+            // Glowing cyan tint
+            glColor4f(0.0f, 0.9f, 1.0f, 0.4f);
+            
+            SolveAxis axis = solveMode->getDirection();
+            for (size_t i = 0; i < cubies.size(); ++i) {
+                bool highlight = false;
+                if (axis == SolveAxis::HORIZONTAL) {
+                    highlight = solveMode->isLayerSelected(cubies[i].iy);
+                } else if (axis == SolveAxis::VERTICAL) {
+                    if (solveMode->getVerticalSubAxis() == SolveVerticalSubAxis::X_AXIS) {
+                        highlight = solveMode->isLayerSelected(cubies[i].ix);
+                    } else {
+                        highlight = solveMode->isLayerSelected(cubies[i].iz);
+                    }
+                }
+                
+                if (highlight) {
+                    applyCubieRenderTransform(transforms[i]);
+                    drawCubieBase(1.02f, 0.4f); // Slightly inflated shell
+                    restoreTransform();
+                }
+            }
+            
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
+            glEnable(GL_LIGHTING);
+        }
+    };
+
+    // Ghost Mode: if Solve Mode is active with a selection, dim unselected layers to make selected layers stand out
+    bool ghostMode = (solveMode && solveMode->isActive() && solveMode->hasSelection());
+    if (ghostMode) {
+        SolveAxis axis = solveMode->getDirection();
+        
+        // Pass 1: Opaque rendering for selected layers
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        
+        for (size_t i = 0; i < cubies.size(); ++i) {
+            bool selected = false;
+            if (axis == SolveAxis::HORIZONTAL) {
+                selected = solveMode->isLayerSelected(cubies[i].iy);
+            } else if (axis == SolveAxis::VERTICAL) {
+                if (solveMode->getVerticalSubAxis() == SolveVerticalSubAxis::X_AXIS) {
+                    selected = solveMode->isLayerSelected(cubies[i].ix);
+                } else {
+                    selected = solveMode->isLayerSelected(cubies[i].iz);
+                }
+            }
+            
+            if (selected) {
+                applyCubieRenderTransform(transforms[i]);
+                drawCubieBase(0.96f, 1.0f);
+                for (int f = 0; f < 6; ++f)
+                    drawFacelet(static_cast<Face>(f), cubies[i].colors[f], 1.0f);
+                restoreTransform();
+            }
+        }
+        
+        // Pass 2: Transparent rendering for unselected layers
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+        
+        // Sort cubies back-to-front relative to camera for transparency
+        float mv[16];
+        glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+        
+        std::vector<std::pair<float, size_t>> depthIndex;
+        depthIndex.reserve(cubies.size());
+        for (size_t i = 0; i < cubies.size(); ++i) {
+            const CubieTransformData& d = transforms[i];
+            float cz = mv[2]*d.tx + mv[6]*d.ty + mv[8]*d.tz + mv[14];
+            depthIndex.push_back({ cz, i });
+        }
+        
+        std::sort(depthIndex.begin(), depthIndex.end(),
+                  [](const std::pair<float,size_t>& a, const std::pair<float,size_t>& b) {
+                      return a.first < b.first;
+                  });
+                  
+        for (const auto& [depth, i] : depthIndex) {
+            bool selected = false;
+            if (axis == SolveAxis::HORIZONTAL) {
+                selected = solveMode->isLayerSelected(cubies[i].iy);
+            } else if (axis == SolveAxis::VERTICAL) {
+                if (solveMode->getVerticalSubAxis() == SolveVerticalSubAxis::X_AXIS) {
+                    selected = solveMode->isLayerSelected(cubies[i].ix);
+                } else {
+                    selected = solveMode->isLayerSelected(cubies[i].iz);
+                }
+            }
+            
+            if (!selected) {
+                applyCubieRenderTransform(transforms[i]);
+                // Dim unselected: base at 0.08f alpha, stickers at 0.15f alpha
+                drawCubieBase(0.96f, 0.08f);
+                for (int f = 0; f < 6; ++f)
+                    drawFacelet(static_cast<Face>(f), cubies[i].colors[f], 0.15f);
+                restoreTransform();
+            }
+        }
+        
+        // Pass 3: Highlight glow overlay
+        drawHighlightPass();
+        
+        // Restore standard states
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_LIGHTING);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        return;
+    }
+
     // ========================================================
     // NORMAL MODE  — single-pass opaque rendering
     // ========================================================
@@ -334,6 +457,8 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
 
             restoreTransform();
         }
+        
+        drawHighlightPass();
         
         // Restore OpenGL state to defaults
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -408,6 +533,8 @@ void Renderer::renderCube(const RubiksCube& cube, const Animation& animation) {
         drawCubieBase(0.96f, GLASS_ALPHA);
         restoreTransform();
     }
+
+    drawHighlightPass();
 
     // Restore OpenGL state to defaults
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
