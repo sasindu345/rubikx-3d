@@ -32,3 +32,9 @@ docs/
 .history
 .cache/
 
+
+# CMake generated files
+Makefile
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/

@@ -18,8 +18,11 @@
 #include "Colors.h"
 #include "solver/PatternLibrary.h"
 #include "ui/WelcomeScreen.h"
+#include "ui/SolveMode.h"
+#include "ui/Picking.h"
 
 WelcomeScreen welcomeScreen;
+SolveMode solveMode;
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -184,7 +187,12 @@ void display() {
         }
         
         // Render 2D HUD Help Menu overlay
-        hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode), activeCube.getSize());
+        hud.render(windowWidth, windowHeight, solutionPlayer, showHelp, alphaBlendingEnabled, static_cast<int>(renderer.renderMode), activeCube.getSize(), solveMode);
+
+        // Render interactive solve mode panel if active
+        if (solveMode.isActive()) {
+            hud.renderSolveModePanel(windowWidth, windowHeight, solveMode, activeCube.getSize());
+        }
 
         // Render scoring panel (top-right): live timer/move counter or last result
         hud.renderScorePanel(windowWidth, windowHeight, scoreManager, activeCube.getSize(), practiceMode);
@@ -252,6 +260,56 @@ void keyboard(unsigned char key, int x, int y) {
             }
             glutPostRedisplay();
         }
+        return;
+    }
+
+    // Solve Mode toggle & intercept
+    if (key == 9) { // Tab key
+        solveMode.toggle();
+        glutPostRedisplay();
+        return;
+    }
+
+    if (solveMode.isActive()) {
+        if (key == 'H' || key == 'h') {
+            solveMode.setDirection(SolveAxis::HORIZONTAL);
+            glutPostRedisplay();
+            return;
+        } else if (key == 'V' || key == 'v') {
+            solveMode.setDirection(SolveAxis::VERTICAL);
+            glutPostRedisplay();
+            return;
+        } else if (key == 'C' || key == 'c') {
+            solveMode.clearSelection();
+            glutPostRedisplay();
+            return;
+        }
+
+        if (solveMode.hasSelection()) {
+            SolveAxis dir = solveMode.getDirection();
+            if (dir == SolveAxis::HORIZONTAL) {
+                if (key == 'A' || key == 'a') {
+                    solveMode.executeRotation(Direction::CCW, activeCube.getSize(), queueUserMove);
+                    glutPostRedisplay();
+                    return;
+                } else if (key == 'D' || key == 'd') {
+                    solveMode.executeRotation(Direction::CW, activeCube.getSize(), queueUserMove);
+                    glutPostRedisplay();
+                    return;
+                }
+            } else if (dir == SolveAxis::VERTICAL) {
+                if (key == 'W' || key == 'w') {
+                    solveMode.executeRotation(Direction::CW, activeCube.getSize(), queueUserMove);
+                    glutPostRedisplay();
+                    return;
+                } else if (key == 'S' || key == 's') {
+                    solveMode.executeRotation(Direction::CCW, activeCube.getSize(), queueUserMove);
+                    glutPostRedisplay();
+                    return;
+                }
+            }
+        }
+        // Block all other keyboard moves when Solve Mode is active
         return;
     }
 
@@ -752,6 +810,46 @@ void mouseButton(int button, int state, int x, int y) {
         return;
     }
 
+    if (solveMode.isActive()) {
+        if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+            // Not a HUD click, try to pick a cubie
+            int ix = -1, iy = -1, iz = -1;
+            if (pickCubie(x, y, activeCube, camera, animation, currentExplosion, windowWidth, windowHeight, ix, iy, iz)) {
+                if (solveMode.getDirection() == SolveAxis::HORIZONTAL) {
+                    solveMode.toggleLayer(iy);
+                } else if (solveMode.getDirection() == SolveAxis::VERTICAL) {
+                    // Check if camera is looking more at Right/Left vs Front/Back
+                    float t = camera.theta;
+                    bool isLookRightLeft = (t >= 45.0f && t < 135.0f) || (t >= 225.0f && t < 315.0f);
+                    if (isLookRightLeft) {
+                        solveMode.toggleVerticalLayer(iz, SolveVerticalSubAxis::Z_AXIS);
+                    } else {
+                        solveMode.toggleVerticalLayer(ix, SolveVerticalSubAxis::X_AXIS);
+                    }
+                }
+                glutPostRedisplay();
+            }
+            return;
+        }
+
+        // Allow scroll wheel zoom in solve mode
+        if (button == 3) { // Scroll Up
+            if (state == GLUT_DOWN) {
+                camera.zoom(-0.5f);
+                glutPostRedisplay();
+            }
+            return;
+        } else if (button == 4) { // Scroll Down
+            if (state == GLUT_DOWN) {
+                camera.zoom(0.5f);
+                glutPostRedisplay();
+            }
+            return;
+        }
+
+        return; // Block drag camera rotation completely in solve mode
+    }
+
     if (button == GLUT_LEFT_BUTTON) {
         if (state == GLUT_DOWN) {
             isLeftMouseDown = true;
@@ -917,6 +1015,7 @@ int main(int argc, char** argv) {
 
     // Initialize default cube size 3x3
     activeCube = CubeFactory::create(3);
+    renderer.solveMode = &solveMode;
 
     // Initialize GLUT
     glutInit(&argc, argv);

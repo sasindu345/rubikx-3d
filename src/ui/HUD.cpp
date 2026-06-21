@@ -26,6 +26,7 @@ Responsibilities:
 */
 
 #include "HUD.h"
+#include "SolveMode.h"
 #include "algorithms/Algorithms.h"
 #include <cstdio>
 
@@ -53,11 +54,11 @@ void HUD::drawString(int x, int y, const std::string& str, void* font, float r, 
 void HUD::drawControlLine(int x, int y, const std::string& key, const std::string& desc, void* font) {
     // Key in electric cyan
     drawString(x, y, key, font, 0.0f, 0.8f, 1.0f);
-    // Description in off-white
-    drawString(x + 75, y, desc, font, 0.85f, 0.85f, 0.9f);
+    // Description in off-white (offset by 110 to avoid overlap for longer keys like "Arrow Keys")
+    drawString(x + 110, y, desc, font, 0.85f, 0.85f, 0.9f);
 }
 
-void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending, int renderMode, int cubeSize) {
+void HUD::render(int width, int height, const SolutionPlayer& player, bool showHelp, bool alphaBlending, int renderMode, int cubeSize, const SolveMode& solveMode) {
     // 2D viewing transformation
     setupOrthographicProjection(width, height);
 
@@ -68,104 +69,149 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
 
     // 1. Draw left help panel if visible
     if (showHelp) {
-        // Draw main dark panel
-        drawPanel(0, 0, leftPanelW, height, 0.08f, 0.08f, 0.1f, 0.85f);
-        // Draw glowing right border
-        drawPanel(leftPanelW - 2, 0, 2, height, 0.2f, 0.4f, 0.6f, 0.6f);
+        if (solveMode.isActive()) {
+            // Draw main dark panel for Solve Mode Help
+            drawPanel(0, 0, leftPanelW, height, 0.08f, 0.08f, 0.1f, 0.85f);
+            // Draw glowing right border
+            drawPanel(leftPanelW - 2, 0, 2, height, 0.2f, 0.4f, 0.6f, 0.6f);
 
-        int startY = 35;
-        int lineSpacing = 18;
+            int startY = 35;
+            int lineSpacing = 18;
 
-        // Title
-        drawString(20, startY, "RUBIKX-3D SYSTEM", GLUT_BITMAP_HELVETICA_18, 1.0f, 0.6f, 0.1f);
-        startY += 16;
-        drawString(20, startY, "Interactive Learning & Solving", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
-        startY += 28;
+            // Title
+            drawString(20, startY, "INTERACTIVE SOLVER", GLUT_BITMAP_HELVETICA_18, 1.0f, 0.6f, 0.1f);
+            startY += 16;
+            drawString(20, startY, "Current Necessary Controls", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+            startY += 28;
 
-        // Lambda helper for two-column moves listing
-        auto draw2Col = [&](int x, int y, const std::string& key, const std::string& desc) {
-            drawString(x, y, key, GLUT_BITMAP_8_BY_13, 0.0f, 0.8f, 1.0f);
-            drawString(x + 42, y, desc, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
-        };
+            // Mouse picking instructions
+            drawString(20, startY, "SELECT LAYERS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.3f, 0.3f);
+            drawPanel(20, startY + 4, 150, 1, 1.0f, 0.3f, 0.3f, 0.5f);
+            startY += 20;
 
-        // --- SECTION 1: CUBE MOVES ---
-        drawString(20, startY, "CUBE MOVES (CW / CCW)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.3f, 0.3f); // Red header
-        drawPanel(20, startY + 4, 150, 1, 1.0f, 0.3f, 0.3f, 0.5f);
-        startY += 20;
+            drawString(20, startY, "Left Click on Cube", GLUT_BITMAP_8_BY_13, 0.0f, 0.8f, 1.0f);
+            drawString(20, startY + lineSpacing, "Select/Deselect a layer.", GLUT_BITMAP_HELVETICA_10, 0.85f, 0.85f, 0.9f);
+            startY += lineSpacing + 28;
 
-        draw2Col(20, startY, "R / r", "Right");  draw2Col(135, startY, "D / d", "Down");  startY += lineSpacing;
-        draw2Col(20, startY, "L / l", "Left");   draw2Col(135, startY, "F / f", "Front"); startY += lineSpacing;
-        draw2Col(20, startY, "U / u", "Up");     draw2Col(135, startY, "B / b", "Back");  startY += 24;
+            // Solver state actions (new H/V/C shortcuts)
+            drawString(20, startY, "SOLVER ACTIONS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+            drawPanel(20, startY + 4, 150, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+            startY += 20;
 
-        drawString(20, startY, "WIDE MOVES (Ctrl+face)", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
-        drawControlLine(20, startY, "^R / ^SR", "Rw / Rw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "^L / ^SL", "Lw / Lw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "^U / ^SU", "Uw / Uw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "^D / ^SD", "Dw / Dw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "^F / ^SF", "Fw / Fw'", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "^B / ^SB", "Bw / Bw'", GLUT_BITMAP_8_BY_13); startY += 24;
+            drawControlLine(20, startY, "H", "Select Horizontal Axis", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "V", "Select Vertical Axis", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "C", "Clear Selection", GLUT_BITMAP_8_BY_13); startY += 28;
 
-        drawString(20, startY, "INNER LAYER (Alt+dig,face)", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
-        drawControlLine(20, startY, "Alt+2..7", "Arm layer 2..7", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "then R/r..", "Apply CW/CCW", GLUT_BITMAP_8_BY_13); startY += 24;
+            // Horizontal rotation instructions
+            drawString(20, startY, "HORIZONTAL MOVES", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+            drawPanel(20, startY + 4, 150, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+            startY += 20;
 
-        drawString(20, startY, "SLICE MOVES", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
-        drawControlLine(20, startY, "J / j", "M-slice (L-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "G / g", "E-slice (D-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "N / n", "S-slice (F-axis)", GLUT_BITMAP_8_BY_13); startY += 24;
+            drawControlLine(20, startY, "A", "Rotate Left (CCW)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "D", "Rotate Right (CW)", GLUT_BITMAP_8_BY_13); startY += 28;
 
-        drawString(20, startY, "CUBE ROTATIONS", GLUT_BITMAP_HELVETICA_10, 1.0f, 0.3f, 0.3f); startY += 15;
-        drawControlLine(20, startY, "[ / ]", "x / x' (R-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "; / '", "y / y' (U-axis)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
-        drawControlLine(20, startY, "\\ / /", "z / z' (F-axis)", GLUT_BITMAP_8_BY_13); startY += 32;
+            // Vertical rotation instructions
+            drawString(20, startY, "VERTICAL MOVES", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f);
+            drawPanel(20, startY + 4, 150, 1, 0.0f, 0.8f, 1.0f, 0.5f);
+            startY += 20;
 
-        // Camera hint (left panel bottom)
-        drawString(20, startY, "Drag Mouse / Arrow Keys to Rotate camera", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+            drawControlLine(20, startY, "W", "Rotate Up (CW)", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "S", "Rotate Down (CCW)", GLUT_BITMAP_8_BY_13); startY += 28;
 
-        // --- RIGHT PANEL FOR ACTIONS & SETTINGS ---
-        int rightPanelW = 270;
-        int rightX = width - rightPanelW;
-        int rightStartY = 210; // Start safely below the score panel
+            // Camera controls
+            drawString(20, startY, "CAMERA VIEW", GLUT_BITMAP_HELVETICA_12, 0.7f, 0.45f, 0.95f);
+            drawPanel(20, startY + 4, 150, 1, 0.7f, 0.45f, 0.95f, 0.5f);
+            startY += 20;
 
-        // Draw background for right panel starting from rightStartY - 10
-        drawPanel(rightX, rightStartY - 10, rightPanelW, height - (rightStartY - 10), 0.08f, 0.08f, 0.1f, 0.85f);
-        // Draw glowing left border
-        drawPanel(rightX, rightStartY - 10, 2, height - (rightStartY - 10), 0.2f, 0.4f, 0.6f, 0.6f);
+            drawControlLine(20, startY, "Arrow Keys", "Orbit Camera view", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawString(20, startY, "(Or drag Mouse to orbit)", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+            startY += 32;
 
-        int rx = rightX + 20;
-
-        // --- SECTION 2: GAME ACTIONS ---
-        drawString(rx, rightStartY, "GAME ACTIONS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f); // Orange header
-        drawPanel(rx, rightStartY + 4, 110, 1, 1.0f, 0.75f, 0.2f, 0.5f);
-        rightStartY += 20;
-
-        drawControlLine(rx, rightStartY, "S", "Scramble Cube", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "Z", "Auto-Solve", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "X", "Reset solved state", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "Y", "Retry last scramble", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        if (cubeSize == 2) {
-            drawControlLine(rx, rightStartY, "!,@", "Apply Patterns 2x2", GLUT_BITMAP_8_BY_13); rightStartY += 28;
+            // Mode exit
+            drawString(20, startY, "Press Tab to exit Solve Mode", GLUT_BITMAP_HELVETICA_10, 0.9f, 0.3f, 0.3f);
         } else {
-            drawControlLine(rx, rightStartY, "!,@,#", "Apply Patterns " + std::to_string(cubeSize) + "x" + std::to_string(cubeSize), GLUT_BITMAP_8_BY_13); rightStartY += 28;
+            // Draw main dark panel
+            drawPanel(0, 0, leftPanelW, height, 0.08f, 0.08f, 0.1f, 0.85f);
+            // Draw glowing right border
+            drawPanel(leftPanelW - 2, 0, 2, height, 0.2f, 0.4f, 0.6f, 0.6f);
+
+            int startY = 35;
+            int lineSpacing = 18;
+
+            // Title
+            drawString(20, startY, "RUBIKX-3D SYSTEM", GLUT_BITMAP_HELVETICA_18, 1.0f, 0.6f, 0.1f);
+            startY += 16;
+            drawString(20, startY, "Interactive Learning & Solving", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+            startY += 35;
+
+            // --- INTRO / SOLVE MODE BANNER ---
+            // Draw a prominent highlight box for Tab Solve Mode
+            drawPanel(15, startY, 220, 70, 0.0f, 0.32f, 0.4f, 0.8f);
+            drawBorder(15, startY, 220, 70, 0.0f, 0.8f, 1.0f, 0.9f, 1.5f);
+            drawString(25, startY + 20, "INTERACTIVE SOLVER", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+            drawString(25, startY + 40, "Press [Tab] key to go", GLUT_BITMAP_8_BY_13, 1.0f, 1.0f, 1.0f);
+            drawString(25, startY + 58, "to solved mode!", GLUT_BITMAP_8_BY_13, 1.0f, 1.0f, 1.0f);
+            startY += 90;
+
+            // --- ESSENTIAL CONTROLS ---
+            drawString(20, startY, "ESSENTIAL CONTROLS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.3f, 0.3f);
+            drawPanel(20, startY + 4, 150, 1, 1.0f, 0.3f, 0.3f, 0.5f);
+            startY += 20;
+
+            drawControlLine(20, startY, "Tab", "Toggle Solve Mode", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "Arrow Keys", "Orbit Camera", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "Mouse Drag", "Orbit Camera", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "Scroll", "Zoom View", GLUT_BITMAP_8_BY_13); startY += lineSpacing;
+            drawControlLine(20, startY, "Esc", "Exit Application", GLUT_BITMAP_8_BY_13); startY += 32;
+
+            // Simple footer
+            drawString(20, startY, "Solve the cube easily using clicks!", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+
+            // --- RIGHT PANEL FOR ACTIONS & SETTINGS ---
+            int rightPanelW = 270;
+            int rightX = width - rightPanelW;
+            int rightStartY = 210; // Start safely below the score panel
+
+            // Draw background for right panel starting from rightStartY - 10
+            drawPanel(rightX, rightStartY - 10, rightPanelW, height - (rightStartY - 10), 0.08f, 0.08f, 0.1f, 0.85f);
+            // Draw glowing left border
+            drawPanel(rightX, rightStartY - 10, 2, height - (rightStartY - 10), 0.2f, 0.4f, 0.6f, 0.6f);
+
+            int rx = rightX + 20;
+
+            // --- SECTION 2: GAME ACTIONS ---
+            drawString(rx, rightStartY, "GAME ACTIONS", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f); // Orange header
+            drawPanel(rx, rightStartY + 4, 110, 1, 1.0f, 0.75f, 0.2f, 0.5f);
+            rightStartY += 20;
+
+            drawControlLine(rx, rightStartY, "S", "Scramble Cube", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "Z", "Auto-Solve", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "X", "Reset solved state", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "Y", "Retry last scramble", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            if (cubeSize == 2) {
+                drawControlLine(rx, rightStartY, "!,@", "Apply Patterns 2x2", GLUT_BITMAP_8_BY_13); rightStartY += 28;
+            } else {
+                drawControlLine(rx, rightStartY, "!,@,#", "Apply Patterns " + std::to_string(cubeSize) + "x" + std::to_string(cubeSize), GLUT_BITMAP_8_BY_13); rightStartY += 28;
+            }
+
+            // --- SECTION 3: SYSTEM SETTINGS ---
+            drawString(rx, rightStartY, "SETTINGS & VIEW", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f); // Cyan header
+            drawPanel(rx, rightStartY + 4, 130, 1, 0.0f, 0.8f, 1.0f, 0.5f);
+            rightStartY += 20;
+
+            drawControlLine(rx, rightStartY, "O", "Setup Menu (Start)", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "2 - 7", "Switch Cube Size", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "C", "Cycle Color Schemes", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "T", "Toggle Glass Mode", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "W", "Toggle Render Style", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "E / e", "Explode / Contract", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "K", "Toggle Orbiting Light", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "M", "Toggle Practice Mode", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "Space", "Pause/Resume Timer", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "I", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "H", "Toggle HUD overlay", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
+            drawControlLine(rx, rightStartY, "Esc", "Exit Application", GLUT_BITMAP_8_BY_13); rightStartY += 22;
         }
-
-        // --- SECTION 3: SYSTEM SETTINGS ---
-        drawString(rx, rightStartY, "SETTINGS & VIEW", GLUT_BITMAP_HELVETICA_12, 0.0f, 0.8f, 1.0f); // Cyan header
-        drawPanel(rx, rightStartY + 4, 130, 1, 0.0f, 0.8f, 1.0f, 0.5f);
-        rightStartY += 20;
-
-        drawControlLine(rx, rightStartY, "O", "Setup Menu (Start)", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "2 - 7", "Switch Cube Size", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "C", "Cycle Color Schemes", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "T", "Toggle Glass Mode", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "W", "Toggle Render Style", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "E / e", "Explode / Contract", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "K", "Toggle Orbiting Light", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "M", "Toggle Practice Mode", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "Space", "Pause/Resume Timer", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "I", "Toggle Session Stats", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "H", "Toggle HUD overlay", GLUT_BITMAP_8_BY_13); rightStartY += lineSpacing;
-        drawControlLine(rx, rightStartY, "Esc", "Exit Application", GLUT_BITMAP_8_BY_13); rightStartY += 22;
     } else {
         // Simple minimized HUD banner at top-left
         drawPanel(10, 10, 190, 30, 0.08f, 0.08f, 0.1f, 0.75f);
@@ -521,4 +567,65 @@ void HUD::renderPendingLayerStatus(int width, int height, int pendingLayer) {
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
     restoreProjection();
+}
+
+void HUD::renderSolveModePanel(int width, int height, const SolveMode& solveMode, int cubeSize) {
+    // 2D viewing transformation
+    setupOrthographicProjection(width, height);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Tucked in the bottom-left corner (compact, non-distracting)
+    int panelX = 20;
+    int panelY = height - 100;
+    int panelW = 230;
+    int panelH = 80;
+
+    // Draw main panel background
+    drawPanel(panelX, panelY, panelW, panelH, 0.08f, 0.08f, 0.1f, 0.9f);
+    // Draw outer glowing cyan border
+    drawBorder(panelX, panelY, panelW, panelH, 0.0f, 0.8f, 1.0f, 0.7f, 1.5f);
+
+    // Title
+    drawString(panelX + 12, panelY + 18, "SOLVER ACTIVE", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.75f, 0.2f);
+    
+    // Axis info
+    std::string axisStr = "Axis: ";
+    if (solveMode.getDirection() == SolveAxis::HORIZONTAL) {
+        axisStr += "Horizontal [H]";
+    } else {
+        axisStr += "Vertical [V]";
+    }
+    drawString(panelX + 12, panelY + 38, axisStr, GLUT_BITMAP_8_BY_13, 0.85f, 0.85f, 0.9f);
+
+    // Selection info
+    std::string selStr = "Selected: ";
+    if (solveMode.hasSelection()) {
+        for (int layer : solveMode.getSelectedLayers()) {
+            if (selStr.length() > 10) selStr += ", ";
+            selStr += std::to_string(layer + 1);
+        }
+    } else {
+        selStr += "None (Click Cube)";
+    }
+    drawString(panelX + 12, panelY + 54, selStr, GLUT_BITMAP_8_BY_13, 0.0f, 0.9f, 1.0f);
+    
+    // Hint line
+    if (solveMode.hasSelection()) {
+        drawString(panelX + 12, panelY + 70, "[C] Clear Selection", GLUT_BITMAP_HELVETICA_10, 0.9f, 0.3f, 0.3f);
+    } else {
+        drawString(panelX + 12, panelY + 70, "[Tab] Exit Solve Mode", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+    restoreProjection();
+}
+
+HUD::SolveHUDAction HUD::handleSolveModeClick(int mouseX, int mouseY, int width, int height) {
+    // Mouse clicks on the bottom-left status panel do not trigger actions
+    return SolveHUDAction::NONE;
 }
