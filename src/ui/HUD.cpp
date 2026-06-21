@@ -89,7 +89,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
             drawPanel(20, startY + 4, 150, 1, 1.0f, 0.3f, 0.3f, 0.5f);
             startY += 20;
 
-            drawString(20, startY, "Left Click on Cube", GLUT_BITMAP_8_BY_13, 0.0f, 0.8f, 1.0f);
+            drawString(20, startY, "Ctrl / Shift + Click on Cube", GLUT_BITMAP_8_BY_13, 0.0f, 0.8f, 1.0f);
             drawString(20, startY + lineSpacing, "Select/Deselect a layer.", GLUT_BITMAP_HELVETICA_10, 0.85f, 0.85f, 0.9f);
             startY += lineSpacing + 28;
 
@@ -168,7 +168,7 @@ void HUD::render(int width, int height, const SolutionPlayer& player, bool showH
             drawString(20, startY, "Solve the cube easily using clicks!", GLUT_BITMAP_HELVETICA_10, 0.6f, 0.6f, 0.7f);
 
             // --- RIGHT PANEL FOR ACTIONS & SETTINGS ---
-            int rightPanelW = 270;
+            int rightPanelW = 310;
             int rightX = width - rightPanelW;
             int rightStartY = 210; // Start safely below the score panel
 
