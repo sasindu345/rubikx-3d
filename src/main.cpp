@@ -770,6 +770,51 @@ void specialKeys(int key, int x, int y) {
     glutPostRedisplay();
 }
 
+enum class ClickedFace {
+    RIGHT, LEFT,
+    TOP, BOTTOM,
+    FRONT, BACK,
+    NONE
+};
+
+ClickedFace getClickedFace(int ix, int iy, int iz, int size, float theta, float phi) {
+    float thetaRad = theta * 3.14159265f / 180.0f;
+    float phiRad = phi * 3.14159265f / 180.0f;
+    float cx = std::cos(phiRad) * std::sin(thetaRad);
+    float cy = std::sin(phiRad);
+    float cz = std::cos(phiRad) * std::cos(thetaRad);
+
+    float maxDot = -999.0f;
+    ClickedFace bestFace = ClickedFace::NONE;
+
+    // Check Right face (+X)
+    if (ix == size - 1) {
+        if (cx > maxDot) { maxDot = cx; bestFace = ClickedFace::RIGHT; }
+    }
+    // Check Left face (-X)
+    if (ix == 0) {
+        if (-cx > maxDot) { maxDot = -cx; bestFace = ClickedFace::LEFT; }
+    }
+    // Check Top face (+Y)
+    if (iy == size - 1) {
+        if (cy > maxDot) { maxDot = cy; bestFace = ClickedFace::TOP; }
+    }
+    // Check Bottom face (-Y)
+    if (iy == 0) {
+        if (-cy > maxDot) { maxDot = -cy; bestFace = ClickedFace::BOTTOM; }
+    }
+    // Check Front face (+Z)
+    if (iz == size - 1) {
+        if (cz > maxDot) { maxDot = cz; bestFace = ClickedFace::FRONT; }
+    }
+    // Check Back face (-Z)
+    if (iz == 0) {
+        if (-cz > maxDot) { maxDot = -cz; bestFace = ClickedFace::BACK; }
+    }
+
+    return bestFace;
+}
+
 void mouseButton(int button, int state, int x, int y) {
     if (welcomeScreen.isActive()) {
         bool startGame = false;
@@ -811,43 +856,52 @@ void mouseButton(int button, int state, int x, int y) {
     }
 
     if (solveMode.isActive()) {
-        if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-            // Not a HUD click, try to pick a cubie
-            int ix = -1, iy = -1, iz = -1;
-            if (pickCubie(x, y, activeCube, camera, animation, currentExplosion, windowWidth, windowHeight, ix, iy, iz)) {
-                if (solveMode.getDirection() == SolveAxis::HORIZONTAL) {
-                    solveMode.toggleLayer(iy);
-                } else if (solveMode.getDirection() == SolveAxis::VERTICAL) {
-                    // Check if camera is looking more at Right/Left vs Front/Back
-                    float t = camera.theta;
-                    bool isLookRightLeft = (t >= 45.0f && t < 135.0f) || (t >= 225.0f && t < 315.0f);
-                    if (isLookRightLeft) {
-                        solveMode.toggleVerticalLayer(iz, SolveVerticalSubAxis::Z_AXIS);
-                    } else {
-                        solveMode.toggleVerticalLayer(ix, SolveVerticalSubAxis::X_AXIS);
+        int modifiers = glutGetModifiers();
+        // Support Ctrl, Alt/Option, or Shift modifiers for broad trackpad compatibility
+        bool modifierHeld = (modifiers & GLUT_ACTIVE_CTRL) != 0 || 
+                            (modifiers & GLUT_ACTIVE_ALT) != 0 || 
+                            (modifiers & GLUT_ACTIVE_SHIFT) != 0;
+
+        if (modifierHeld) {
+            // Accept either Left Click or Right Click (since macOS trackpad Ctrl+click is sent as a Right Click)
+            if ((button == GLUT_LEFT_BUTTON || button == GLUT_RIGHT_BUTTON) && state == GLUT_DOWN) {
+                // Try to pick a cubie
+                int ix = -1, iy = -1, iz = -1;
+                if (pickCubie(x, y, activeCube, camera, animation, currentExplosion, windowWidth, windowHeight, ix, iy, iz)) {
+                    if (solveMode.getDirection() == SolveAxis::HORIZONTAL) {
+                        solveMode.toggleLayer(iy);
+                    } else if (solveMode.getDirection() == SolveAxis::VERTICAL) {
+                        ClickedFace clickedFace = getClickedFace(ix, iy, iz, activeCube.getSize(), camera.theta, camera.phi);
+                        SolveVerticalSubAxis targetSubAxis;
+                        if (clickedFace == ClickedFace::FRONT || clickedFace == ClickedFace::BACK) {
+                            targetSubAxis = SolveVerticalSubAxis::X_AXIS;
+                        } else if (clickedFace == ClickedFace::LEFT || clickedFace == ClickedFace::RIGHT) {
+                            targetSubAxis = SolveVerticalSubAxis::Z_AXIS;
+                        } else { // TOP or BOTTOM
+                            if (solveMode.hasSelection()) {
+                                targetSubAxis = (solveMode.getVerticalSubAxis() == SolveVerticalSubAxis::X_AXIS)
+                                                ? SolveVerticalSubAxis::X_AXIS
+                                                : SolveVerticalSubAxis::Z_AXIS;
+                            } else {
+                                float t = camera.theta;
+                                bool isLookRightLeft = (t >= 45.0f && t < 135.0f) || (t >= 225.0f && t < 315.0f);
+                                targetSubAxis = isLookRightLeft ? SolveVerticalSubAxis::Z_AXIS : SolveVerticalSubAxis::X_AXIS;
+                            }
+                        }
+
+                        if (targetSubAxis == SolveVerticalSubAxis::X_AXIS) {
+                            solveMode.toggleVerticalLayer(ix, SolveVerticalSubAxis::X_AXIS);
+                        } else {
+                            solveMode.toggleVerticalLayer(iz, SolveVerticalSubAxis::Z_AXIS);
+                        }
                     }
+                    glutPostRedisplay();
                 }
-                glutPostRedisplay();
+                return;
             }
-            return;
+        } else {
+            // Let standard rotation/zooming run
         }
-
-        // Allow scroll wheel zoom in solve mode
-        if (button == 3) { // Scroll Up
-            if (state == GLUT_DOWN) {
-                camera.zoom(-0.5f);
-                glutPostRedisplay();
-            }
-            return;
-        } else if (button == 4) { // Scroll Down
-            if (state == GLUT_DOWN) {
-                camera.zoom(0.5f);
-                glutPostRedisplay();
-            }
-            return;
-        }
-
-        return; // Block drag camera rotation completely in solve mode
     }
 
     if (button == GLUT_LEFT_BUTTON) {
