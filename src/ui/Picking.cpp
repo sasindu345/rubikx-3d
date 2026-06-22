@@ -1,3 +1,28 @@
+/*
+--------------------------------------------------
+Module: Color-Coded 3D Object Picking
+
+Purpose:
+Provides 3D object selection by rendering cubies in unique solid colors,
+reading the pixel under the mouse cursor, and decoding it back to coordinates.
+
+Graphics Concepts:
+- Selection / Object Picking
+- Back Buffer Reading (glReadPixels)
+- Offscreen Render Pass Simulating
+
+Mathematics:
+- Flat coordinate decoding (RGB to X, Y, Z index mapping)
+
+Responsibilities:
+- Running picking pass during mouse clicks
+- Mapping pixel values to block indices
+- Restoring projection matrix state
+
+Responsible Member: Member 5
+--------------------------------------------------
+*/
+
 #include "Picking.h"
 #include "../algorithms/Algorithms.h"
 #include "../algorithms/Transformations.h"
