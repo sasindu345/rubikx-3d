@@ -813,6 +813,7 @@ CMakeFiles/RubikX3D.dir/src/main.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/file_clock.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/forward_list \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/algorithms/Algorithms.h \
+  /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/algorithms/../utils/MathUtils.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/utils/ScoreManager.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/Colors.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/solver/PatternLibrary.h \

@@ -801,6 +801,7 @@ CMakeFiles/RubikX3D.dir/src/Renderer.cpp.o: \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/cube/Move.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/Animation.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/algorithms/Transformations.h \
+  /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/algorithms/../utils/MathUtils.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/SolveMode.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/set \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__tree \

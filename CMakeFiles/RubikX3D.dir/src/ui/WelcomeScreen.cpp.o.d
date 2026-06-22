@@ -802,6 +802,7 @@ CMakeFiles/RubikX3D.dir/src/ui/WelcomeScreen.cpp.o: \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/Renderer.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/Colors.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/algorithms/Algorithms.h \
+  /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/algorithms/../utils/MathUtils.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/GLUT.framework/Headers/glut.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Headers/OpenGLAvailability.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/os/availability.h \

@@ -802,6 +802,7 @@ CMakeFiles/RubikX3D.dir/src/ui/Picking.cpp.o: \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/../Camera.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/../Animation.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/../algorithms/Algorithms.h \
+  /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/../algorithms/../utils/MathUtils.h \
   /Users/oneionei/MyProjects/rubbicx/rubikx-3d/src/ui/../algorithms/Transformations.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/GLUT.framework/Headers/glut.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Headers/OpenGLAvailability.h \

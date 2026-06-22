@@ -13,7 +13,7 @@ Mathematics:
         R = reflected light direction, n = shininess exponent
 Used by: Renderer.cpp, main.cpp
 User Result: Realistic face reflections with dynamic orbiting light source.
-Responsible Member: Member 2
+Responsible Member: Member 3
 --------------------------------------------------
 */
 
